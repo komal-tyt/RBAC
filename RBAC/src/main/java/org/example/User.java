@@ -30,10 +30,6 @@ public record User (String username, String fullName, String email) {
             throw new IllegalArgumentException("Email must contain @ and a dot after @");
         }
 
-
-
-
-
         return new User(username, fullName, email);
     }
 
