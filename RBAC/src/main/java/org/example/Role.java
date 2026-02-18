@@ -59,7 +59,7 @@ public class Role {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id); // число на основе ID
+        return Objects.hash(id);
     }
 
     @Override
@@ -70,6 +70,10 @@ public class Role {
                 ", description='" + description + '\'' +
                 ", permissions=" + permissions +
                 '}';
+    }
+
+    public String name(){
+        return this.name;
     }
 
     public String format(){
