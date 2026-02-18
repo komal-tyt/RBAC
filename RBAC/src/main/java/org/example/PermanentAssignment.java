@@ -10,10 +10,12 @@ public class PermanentAssignment extends AbstractRoleAssignment{
 
     }
 
+    @Override
     public boolean isActive() {
         return !revoked;
     }
 
+    @Override
     public String assignmentType(){
         return "PERMANENT";
     }
