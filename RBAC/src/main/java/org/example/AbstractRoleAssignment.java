@@ -19,7 +19,7 @@ public abstract class AbstractRoleAssignment implements RoleAssignment{
     }
 
     public String generateId(){
-        return "role_" + UUID.randomUUID().toString();
+        return "assign_" + UUID.randomUUID().toString();
     }
 
     @Override
