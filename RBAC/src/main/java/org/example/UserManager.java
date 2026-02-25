@@ -5,20 +5,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class UserManager implements Repository<User> {
-    private Map<String, User> users;
+    private final Map<String, User> usersByUsername;
 
     public UserManager(){
-        this.users = new HashMap<>();
+        this.usersByUsername = new HashMap<>();
     }
 
     @Override
     public List<User> findAll() {
-        return users.values().stream().collect(Collectors.toList());
+        return usersByUsername.values().stream().collect(Collectors.toList());
     }
 
     @Override
     public int count() {
-        return users.size();
+        return usersByUsername.size();
     }
 
     @Override
@@ -27,13 +27,13 @@ public class UserManager implements Repository<User> {
             throw new IllegalArgumentException("Error! User cant null");
         }
 
-        if (users.containsKey(item.username())) {
+        if (usersByUsername.containsKey(item.username())) {
             throw new IllegalArgumentException(
                     "User with username '" + item.username() + "' already exists"
             );
         }
 
-        users.put(item.username(), item);
+        usersByUsername.put(item.username(), item);
     }
 
     @Override
@@ -41,7 +41,8 @@ public class UserManager implements Repository<User> {
         if (item == null) {
             return false;
         }
-        return users.remove(item.username()) != null;
+
+        return usersByUsername.remove(item.username()) != null;
     }
 
     @Override
@@ -51,18 +52,18 @@ public class UserManager implements Repository<User> {
 
     @Override
     public void clear() {
-        users.clear();
+        usersByUsername.clear();
     }
 
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof UserManager  usermanager )) return false;
-        return users.equals(usermanager.users);
+        return usersByUsername.equals(usermanager.usersByUsername);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(users);
+        return Objects.hash(usersByUsername);
     }
 
     public Optional<User> findByUsername(String username){
@@ -70,7 +71,7 @@ public class UserManager implements Repository<User> {
             return Optional.empty();
         }
 
-        return Optional.ofNullable(users.get(username));
+        return Optional.ofNullable(usersByUsername.get(username));
     }
 
     public Optional<User> findByEmail(String email){
@@ -78,20 +79,20 @@ public class UserManager implements Repository<User> {
             return Optional.empty();
         }
 
-        return users.values().stream().filter(user -> user.email().equals(email)).findFirst();
+        return usersByUsername.values().stream().filter(user -> user.email().equals(email)).findFirst();
     }
 
     public List<User> findByFilter(UserFilter filter){
         if (filter == null){
-            return new ArrayList<>(users.values());
+            return new ArrayList<>(usersByUsername.values());
         }
 
-        return users.values().stream().filter(filter :: test).collect(Collectors.toList());
+        return usersByUsername.values().stream().filter(filter :: test).collect(Collectors.toList());
     }
 
     public List<User> findAll(UserFilter filter, Comparator<User> sorter){
 
-        Stream<User> stream = users.values().stream();
+        Stream<User> stream = usersByUsername.values().stream();
 
         if (filter != null){
             stream = stream.filter(filter::test);
@@ -109,15 +110,15 @@ public class UserManager implements Repository<User> {
             return false;
         }
 
-        return users.containsKey(username);
+        return usersByUsername.containsKey(username);
     }
 
     public void update(String username, String newFullName, String newEmail) {
-        if (!users.containsKey(username)) {
+        if (!usersByUsername.containsKey(username)) {
             throw new IllegalArgumentException("User not found: " + username);
         }
 
         User updated = User.create(username, newFullName, newEmail);
-        users.put(username, updated);
+        usersByUsername.put(username, updated);
     }
 }

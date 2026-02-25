@@ -51,6 +51,10 @@ public class Role {
         return Set.copyOf(permissions);
     }
 
+    public String getId() {
+        return id;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof Role role)) return false;
