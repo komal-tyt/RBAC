@@ -8,7 +8,7 @@ public class AssignmentManager implements Repository<RoleAssignment>{
 
     private final Map<String, RoleAssignment> roleAssignmentByAssignments;
     private final UserManager userManager;
-    private final RoleManager roleManager;
+    private RoleManager roleManager;
 
     public AssignmentManager(UserManager userManager, RoleManager roleManager) {
         this.roleAssignmentByAssignments = new HashMap<>();
@@ -179,6 +179,7 @@ public class AssignmentManager implements Repository<RoleAssignment>{
     }
 
 
-
-
+    public void setRoleManager(RoleManager roleManager) {
+        this.roleManager = roleManager;
+    }
 }
