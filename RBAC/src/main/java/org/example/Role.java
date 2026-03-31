@@ -91,4 +91,7 @@ public class Role {
 
     }
 
+    public String getDescription() {
+        return description;
+    }
 }
