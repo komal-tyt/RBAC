@@ -14,8 +14,9 @@ public class CommandParser {
     }
 
     public void registerCommand(String name, String description, Command command) {
-        commands.put(name, command);
-        commandDescriptions.put(name, description);
+        String lowerName = name.toLowerCase();
+        commands.put(lowerName, command);
+        commandDescriptions.put(lowerName, description);
     }
 
     void executeCommand(String commandName, Scanner scanner, RBACSystem system){
