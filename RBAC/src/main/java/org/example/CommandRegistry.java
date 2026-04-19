@@ -68,6 +68,19 @@ public class CommandRegistry {
                 System.out.print("Email: ");
                 String email = s.nextLine().trim();
 
+                ValidationUtils.requireNonEmpty(username, "Username");
+                ValidationUtils.requireNonEmpty(fullName, "FullName");
+                ValidationUtils.requireNonEmpty(email, "Email");
+
+                if (!ValidationUtils.isValidUsername(username)) {
+                    System.out.println("Error: Username must be 3-20 characters...");
+                    return;
+                }
+                if (!ValidationUtils.isValidEmail(email)) {
+                    System.out.println("Error: Invalid email format");
+                    return;
+                }
+
                 User user = User.create(username, fullName, email);
 
                 sys.getUserManager().add(user);
@@ -161,10 +174,15 @@ public class CommandRegistry {
                     newFullName = user.fullName();
                 }
 
-                System.out.println("\nEnter the new Email: ");
+                System.out.print("Enter the new Email: ");
                 String newEmail = s.nextLine().trim();
                 if (newEmail.isEmpty()) {
                     newEmail = user.email();
+                } else {
+                    if (!ValidationUtils.isValidEmail(newEmail)) {
+                        System.out.println("Error: Invalid email format");
+                        return;
+                    }
                 }
 
                 try {
@@ -314,8 +332,13 @@ public class CommandRegistry {
             System.out.println("\n=== CREATE NEW ROLE ===");
 
             try{
-                System.out.println("Role: ");
+                System.out.print("Role name: ");
                 String name = s.nextLine().trim();
+
+                if (name == null || name.trim().isEmpty()) {
+                    System.out.println("Error: Role name cannot be empty");
+                    return;
+                }
 
                 System.out.print("Role description: ");
                 String description = s.nextLine().trim();
@@ -408,6 +431,11 @@ public class CommandRegistry {
                 String newName = s.nextLine().trim();
                 if (newName.isEmpty()) {
                     newName = role.name();
+                } else {
+                    if (newName == null || newName.trim().isEmpty()) {
+                        System.out.println("Error: Role name cannot be empty");
+                        return;
+                    }
                 }
 
                 System.out.print("New description: ");
@@ -517,11 +545,26 @@ public class CommandRegistry {
                 System.out.print("Permission name (READ, WRITE, DELETE): ");
                 String permName = s.nextLine().trim().toUpperCase();
 
+                if (permName == null || permName.trim().isEmpty()) {
+                    System.out.println("Error: Permission name cannot be empty");
+                    return;
+                }
+
                 System.out.print("Resource (users, reports, *): ");
                 String resource = s.nextLine().trim().toLowerCase();
 
+                if (resource == null || resource.trim().isEmpty()) {
+                    System.out.println("Error: Resource cannot be empty");
+                    return;
+                }
+
                 System.out.print("Description: ");
                 String description = s.nextLine().trim();
+
+                if (description == null || description.trim().isEmpty()) {
+                    System.out.println("Error: Description cannot be empty");
+                    return;
+                }
 
                 try {
                     Permission permission = new Permission(permName, resource, description);
@@ -716,11 +759,15 @@ public class CommandRegistry {
                     System.out.print("Expiration date (YYYY-MM-DD): ");
                     String expiresAt = s.nextLine().trim();
 
+                    if (!ValidationUtils.isValidDate(expiresAt)) {
+                        System.out.println("Error: Invalid date format. Use YYYY-MM-DD");
+                        return;
+                    }
+
                     System.out.print("Auto-renew? (y/n): ");
                     boolean autoRenew = s.nextLine().trim().toLowerCase().equals("y");
 
                     TemporaryAssignment assignment = new TemporaryAssignment(user, role, metadata, expiresAt, autoRenew);
-                    am.add(assignment);
                     System.out.println("\nTemporary role assigned successfully!");
                     System.out.println("  User: " + username);
                     System.out.println("  Role: " + role.name());
@@ -1049,6 +1096,11 @@ public class CommandRegistry {
                 System.out.println("\nCurrent expiration: " + temp.getExpiresAt());
                 System.out.print("New expiration date (YYYY-MM-DD): ");
                 String newDate = s.nextLine().trim();
+
+                if (!ValidationUtils.isValidDate(newDate)) {
+                    System.out.println("Error: Invalid date format. Use YYYY-MM-DD");
+                    return;
+                }
 
                 temp.extend(newDate);
                 System.out.println("Assignment extended successfully!");

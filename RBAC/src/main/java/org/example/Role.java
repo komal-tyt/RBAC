@@ -13,6 +13,9 @@ public class Role {
     private final Set<Permission> permissions;
 
     public Role(String name, String description){
+        ValidationUtils.requireNonEmpty(name, "Role name");
+        ValidationUtils.requireNonEmpty(description, "Role description");
+
         this.id = generateId();
         this.name = name;
         this.description = description;

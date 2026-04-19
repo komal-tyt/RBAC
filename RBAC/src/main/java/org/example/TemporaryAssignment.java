@@ -9,6 +9,12 @@ public class TemporaryAssignment extends AbstractRoleAssignment{
 
     public TemporaryAssignment(User user, Role role, AssignmentMetadata metadata, String expiresAt, boolean autoRenew) {
         super(user, role, metadata);
+
+        ValidationUtils.requireNonEmpty(expiresAt, "Expiration date");
+        if (!ValidationUtils.isValidDate(expiresAt)) {
+            throw new IllegalArgumentException("Expiration date must be in format YYYY-MM-DD");
+        }
+
         this.expiresAt = expiresAt;
         this.autoRenew = autoRenew;
     }
@@ -29,7 +35,11 @@ public class TemporaryAssignment extends AbstractRoleAssignment{
         return "TEMPORARY";
     }
 
-    public void extend(String newExpirationDate){
+    public void extend(String newExpirationDate) {
+        ValidationUtils.requireNonEmpty(newExpirationDate, "New expiration date");
+        if (!ValidationUtils.isValidDate(newExpirationDate)) {
+            throw new IllegalArgumentException("New expiration date must be in format YYYY-MM-DD");
+        }
         this.expiresAt = newExpirationDate;
     }
 

@@ -4,29 +4,15 @@ package org.example;
 
 public record User (String username, String fullName, String email) {
 
-    public static User create(String username, String fullName, String email){
+    public static User create(String username, String fullName, String email) {
+        ValidationUtils.requireNonEmpty(username, "Username");
+        ValidationUtils.requireNonEmpty(fullName, "FullName");
+        ValidationUtils.requireNonEmpty(email, "Email");
 
-        if (username == null || username.isEmpty()){
-            throw new IllegalArgumentException("Username is a required field");
+        if (!ValidationUtils.isValidUsername(username)) {
+            throw new IllegalArgumentException("Username must be 3-20 characters long and contain only letters, numbers, and underscores");
         }
-
-        if (fullName == null || fullName.isEmpty()){
-            throw new IllegalArgumentException("FullName is a required field");
-        }
-
-        if (email == null || email.isEmpty()){
-            throw new IllegalArgumentException("Email is a required field");
-        }
-
-        if ((username.length() < 3) || (username.length() > 20)){
-            throw new IllegalArgumentException("Username from 3 to 20 characters");
-        }
-
-        if (!username.matches("^[a-zA-Z0-9_]+$")){
-            throw new IllegalArgumentException("The username must contain only Latin letters, numbers, and underscores.");
-        }
-
-        if (!email.matches("^.+@.+\\..+$")){
+        if (!ValidationUtils.isValidEmail(email)) {
             throw new IllegalArgumentException("Email must contain @ and a dot after @");
         }
 

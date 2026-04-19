@@ -2,34 +2,13 @@ package org.example;
 
 public record Permission (String name, String resource, String description) {
 
-    public Permission (String name, String resource, String description){
+    public Permission(String name, String resource, String description) {
+        ValidationUtils.requireNonEmpty(name, "Permission name");
+        ValidationUtils.requireNonEmpty(resource, "Resource");
+        ValidationUtils.requireNonEmpty(description, "Description");
 
-        if (name == null) {
-            throw new IllegalArgumentException("Name cannot be null!");
-        }
-
-        if (name.isEmpty()){
-            throw new IllegalArgumentException("Name is blank!");
-        }
-
-        if (name.contains(" ")){
-            throw new IllegalArgumentException("Name cannot contain spaces!");
-        }
-
-        if (resource == null) {
-            throw new IllegalArgumentException("Resource cannot be null!");
-        }
-
-        if (resource.isEmpty()) {
-            throw new IllegalArgumentException("Resource is empty!");
-        }
-
-        if (description == null) {
-            throw new IllegalArgumentException("Description cannot be null!");
-        }
-
-        if (description.isEmpty()){
-            throw new IllegalArgumentException("Description is empty!");
+        if (name.contains(" ")) {
+            throw new IllegalArgumentException("Permission name cannot contain spaces!");
         }
 
         this.name = name.toUpperCase();
