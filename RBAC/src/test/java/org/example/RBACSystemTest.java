@@ -10,7 +10,8 @@ class RBACSystemTest {
 
     @BeforeEach
     void setUp() {
-        system = new RBACSystem();
+        AuditLog auditLog = new AuditLog();
+        system = new RBACSystem(auditLog);
     }
 
     @Test

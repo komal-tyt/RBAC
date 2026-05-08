@@ -16,7 +16,7 @@ public class RBACSystem {
         this.assignmentManager = new AssignmentManager(userManager, null);
         this.roleManager = new RoleManager(assignmentManager);
         this.assignmentManager.setRoleManager(roleManager);
-        this.auditLog = new AuditLog();
+        this.auditLog = auditLog;
         this.currentUser = null;
     }
 

@@ -16,7 +16,8 @@ class CommandRegistryTest {
 
     @BeforeEach
     void setUp() {
-        system = new RBACSystem();
+        AuditLog auditLog = new AuditLog();
+        system = new RBACSystem(auditLog);
         system.initialize();
         parser = new CommandParser();
 

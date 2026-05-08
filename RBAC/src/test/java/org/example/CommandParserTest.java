@@ -17,7 +17,8 @@ class CommandParserTest {
     @BeforeEach
     void setUp() {
         parser = new CommandParser();
-        system = new RBACSystem();
+        AuditLog auditLog = new AuditLog();
+        system = new RBACSystem(auditLog);
         system.initialize();
 
         outputStream = new ByteArrayOutputStream();
