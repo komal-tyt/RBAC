@@ -1556,7 +1556,7 @@ public class CommandRegistry {
             }
         });
 
-        // audit-log - просмотр лога аудита
+
         parser.registerCommand("audit-log", "Show audit log", (s, sys) -> {
             System.out.println("\n=== AUDIT LOG ===");
 
@@ -1610,6 +1610,69 @@ public class CommandRegistry {
                     break;
                 default:
                     System.out.println("Invalid choice");
+            }
+        });
+
+        parser.registerCommand("report-users", "Generate user report", (s, sys) -> {
+            System.out.println("\n=== GENERATE USER REPORT ===");
+
+            ReportGenerator generator = new ReportGenerator();
+            String report = generator.generateUserReport(sys.getUserManager(), sys.getAssignmentManager());
+
+            System.out.print("Save to file? (y/n): ");
+            String answer = s.nextLine().trim().toLowerCase();
+
+            if (answer.equals("y") || answer.equals("yes")) {
+                System.out.print("Enter filename (default: user_report.txt): ");
+                String filename = s.nextLine().trim();
+                if (filename.isEmpty()) {
+                    filename = "user_report.txt";
+                }
+                generator.exportToFile(report, filename);
+            } else {
+                System.out.println(report);
+            }
+        });
+
+        parser.registerCommand("report-roles", "Generate role report", (s, sys) -> {
+            System.out.println("\n=== GENERATE ROLE REPORT ===");
+
+            ReportGenerator generator = new ReportGenerator();
+            String report = generator.generateRoleReport(sys.getRoleManager(), sys.getAssignmentManager());
+
+            System.out.print("Save to file? (y/n): ");
+            String answer = s.nextLine().trim().toLowerCase();
+
+            if (answer.equals("y") || answer.equals("yes")) {
+                System.out.print("Enter filename (default: role_report.txt): ");
+                String filename = s.nextLine().trim();
+                if (filename.isEmpty()) {
+                    filename = "role_report.txt";
+                }
+                generator.exportToFile(report, filename);
+            } else {
+                System.out.println(report);
+            }
+        });
+
+        parser.registerCommand("report-matrix", "Generate permission matrix", (s, sys) -> {
+            System.out.println("\n=== GENERATE PERMISSION MATRIX ===");
+
+            ReportGenerator generator = new ReportGenerator();
+            String report = generator.generatePermissionMatrix(sys.getUserManager(), sys.getAssignmentManager());
+
+            System.out.print("Save to file? (y/n): ");
+            String answer = s.nextLine().trim().toLowerCase();
+
+            if (answer.equals("y") || answer.equals("yes")) {
+                System.out.print("Enter filename (default: matrix_report.txt): ");
+                String filename = s.nextLine().trim();
+                if (filename.isEmpty()) {
+                    filename = "matrix_report.txt";
+                }
+                generator.exportToFile(report, filename);
+            } else {
+                System.out.println(report);
             }
         });
 
