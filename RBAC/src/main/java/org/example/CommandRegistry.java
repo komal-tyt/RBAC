@@ -85,6 +85,9 @@ public class CommandRegistry {
 
                 sys.getUserManager().add(user);
 
+                sys.getAuditLog().log("CREATE_USER", sys.getCurrentUser(), username,
+                        "Full name: " + fullName + ", Email: " + email);
+
                 System.out.println("\nUser created successfully!");
                 System.out.println("  Username: " + user.username());
                 System.out.println("  Full Name: " + user.fullName());
@@ -220,12 +223,17 @@ public class CommandRegistry {
 
                 if (answer.equals("y") || answer.equals("yes")){
                     List<RoleAssignment> assignments = am.findByUser(user);
+                    int rolesCount = assignments.size();
 
                     for (RoleAssignment ra : assignments) {
                         am.remove(ra);
                     }
 
                     um.remove(user);
+
+                    sys.getAuditLog().log("DELETE_USER", sys.getCurrentUser(), username,
+                            "Removed " + rolesCount + " role assignment(s)");
+
                     System.out.println("User '" + username + "' deleted successfully!");
                 } else if (answer.equals("n") || answer.equals("no")){
                     System.out.println("Deletion cancelled");
@@ -345,6 +353,9 @@ public class CommandRegistry {
 
                 Role role = new Role(name, description);
                 sys.getRoleManager().add(role);
+
+                sys.getAuditLog().log("CREATE_ROLE", sys.getCurrentUser(), name,
+                        "Description: " + description);
 
                 System.out.println("\nRole '" + name + "' created successfully!");
                 System.out.println("  ID: " + role.getId());
@@ -494,6 +505,7 @@ public class CommandRegistry {
                 Role role = roleOpt.get();
 
                 List<RoleAssignment> assignments = am.findByRole(role);
+                int usersCount = assignments.size();
 
                 if (!assignments.isEmpty()) {
                     System.out.println("\nError: Role is assigned to " + assignments.size() + " user(s):");
@@ -512,6 +524,10 @@ public class CommandRegistry {
                     }
 
                     rm.remove(role);
+
+                    sys.getAuditLog().log("DELETE_ROLE", sys.getCurrentUser(), roleName,
+                            "Removed from " + usersCount + " user(s)");
+
                     System.out.println("Role '" + roleName + "' deleted successfully!");
                 } else if (answer.equals("no") || answer.equals("n")) {
                     System.out.println("Deletion cancelled");
@@ -750,6 +766,10 @@ public class CommandRegistry {
                 if (type.equals("permanent") || type.equals("p")) {
                     PermanentAssignment assignment = new PermanentAssignment(user, role, metadata);
                     am.add(assignment);
+
+                    sys.getAuditLog().log("ASSIGN_ROLE", sys.getCurrentUser(),
+                            username + " -> " + role.name(), "Type: PERMANENT, Reason: " + reason);
+
                     System.out.println("\nPermanent role assigned successfully!");
                     System.out.println("  User: " + username);
                     System.out.println("  Role: " + role.name());
@@ -768,6 +788,12 @@ public class CommandRegistry {
                     boolean autoRenew = s.nextLine().trim().toLowerCase().equals("y");
 
                     TemporaryAssignment assignment = new TemporaryAssignment(user, role, metadata, expiresAt, autoRenew);
+
+                    am.add(assignment);
+
+                    sys.getAuditLog().log("ASSIGN_ROLE", sys.getCurrentUser(),
+                            username + " -> " + role.name(), "Type: TEMPORARY, Expires: " + expiresAt + ", Reason: " + reason);
+
                     System.out.println("\nTemporary role assigned successfully!");
                     System.out.println("  User: " + username);
                     System.out.println("  Role: " + role.name());
@@ -835,9 +861,14 @@ public class CommandRegistry {
             }
 
             RoleAssignment toRevoke = activeAssignments.get(choice);
+            String roleName = toRevoke.role().name();
 
             if (toRevoke instanceof PermanentAssignment) {
                 ((PermanentAssignment) toRevoke).revoke();
+
+                sys.getAuditLog().log("REVOKE_ROLE", sys.getCurrentUser(),
+                        username + " <- " + roleName, "Type: PERMANENT");
+
                 System.out.println("\nPermanent assignment revoked successfully!");
                 System.out.println("  User: " + username);
                 System.out.println("  Role: " + toRevoke.role().name());
@@ -1522,6 +1553,63 @@ public class CommandRegistry {
                 System.out.println("File not found: " + filename);
             } catch (java.io.IOException e) {
                 System.out.println("Error loading data: " + e.getMessage());
+            }
+        });
+
+        // audit-log - просмотр лога аудита
+        parser.registerCommand("audit-log", "Show audit log", (s, sys) -> {
+            System.out.println("\n=== AUDIT LOG ===");
+
+            System.out.println("Options:");
+            System.out.println("  1. Show all entries");
+            System.out.println("  2. Filter by performer");
+            System.out.println("  3. Filter by action");
+            System.out.println("  4. Save to file");
+            System.out.print("Choice (1-4): ");
+
+            String choice = s.nextLine().trim();
+            AuditLog auditLog = sys.getAuditLog();
+
+            switch (choice) {
+                case "1":
+                    auditLog.printLog();
+                    break;
+                case "2":
+                    System.out.print("Enter performer username: ");
+                    String performer = s.nextLine().trim();
+                    var byPerformer = auditLog.getByPerformer(performer);
+                    if (byPerformer.isEmpty()) {
+                        System.out.println("No entries found for performer: " + performer);
+                    } else {
+                        System.out.println("\n=== AUDIT LOG (performer: " + performer + ") ===");
+                        for (var entry : byPerformer) {
+                            System.out.println(entry.format());
+                        }
+                        System.out.println("Total: " + byPerformer.size());
+                    }
+                    break;
+                case "3":
+                    System.out.print("Enter action: ");
+                    String action = s.nextLine().trim().toUpperCase();
+                    var byAction = auditLog.getByAction(action);
+                    if (byAction.isEmpty()) {
+                        System.out.println("No entries found for action: " + action);
+                    } else {
+                        System.out.println("\n=== AUDIT LOG (action: " + action + ") ===");
+                        for (var entry : byAction) {
+                            System.out.println(entry.format());
+                        }
+                        System.out.println("Total: " + byAction.size());
+                    }
+                    break;
+                case "4":
+                    System.out.print("Enter filename: ");
+                    String filename = s.nextLine().trim();
+                    if (filename.isEmpty()) filename = "audit_log.txt";
+                    auditLog.saveToFile(filename);
+                    break;
+                default:
+                    System.out.println("Invalid choice");
             }
         });
 

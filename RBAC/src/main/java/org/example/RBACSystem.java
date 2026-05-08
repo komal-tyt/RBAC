@@ -8,14 +8,20 @@ public class RBACSystem {
     private final UserManager userManager;
     private final RoleManager roleManager;
     private final AssignmentManager assignmentManager;
+    private final AuditLog auditLog;
     private String currentUser;
 
-    public RBACSystem(){
+    public RBACSystem(AuditLog auditLog){
         this.userManager = new UserManager();
         this.assignmentManager = new AssignmentManager(userManager, null);
         this.roleManager = new RoleManager(assignmentManager);
         this.assignmentManager.setRoleManager(roleManager);
+        this.auditLog = new AuditLog();
         this.currentUser = null;
+    }
+
+    public AuditLog getAuditLog() {
+        return auditLog;
     }
 
     public UserManager getUserManager() {
