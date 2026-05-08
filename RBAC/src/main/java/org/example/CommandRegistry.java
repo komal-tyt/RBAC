@@ -48,19 +48,18 @@ public class CommandRegistry {
                 return;
             }
 
-            System.out.println("\n" + "-".repeat(70));
-            System.out.printf("| %-15s | %-25s | %-20s |\n", "USERNAME", "FULL NAME", "EMAIL");
-            System.out.println("-".repeat(70));
+            String[] headers = {"USERNAME", "FULL NAME", "EMAIL"};
+            List<String[]> rows = new java.util.ArrayList<>();
 
             for (User user : users) {
-                System.out.printf("| %-15s | %-25s | %-20s |\n",
+                rows.add(new String[]{
                         user.username(),
-                        user.fullName().length() > 25 ? user.fullName().substring(0, 22) + "..." : user.fullName(),
-                        user.email().length() > 20 ? user.email().substring(0, 17) + "..." : user.email()
-                );
+                        FormatUtils.truncate(user.fullName(), 25),
+                        FormatUtils.truncate(user.email(), 20)
+                });
             }
 
-            System.out.println("-".repeat(70));
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + users.size() + " users");
         });
 
@@ -104,8 +103,6 @@ public class CommandRegistry {
 
 
         parser.registerCommand("user-view", "View user", (s, sys) -> {
-            ConsoleUtils.printHeader("VIEW USER");
-
             String username = ConsoleUtils.promptString(s, "Username: ", true);
 
             UserManager um = sys.getUserManager();
@@ -116,39 +113,51 @@ public class CommandRegistry {
             if (optionalUser.isPresent()) {
                 User user = optionalUser.get();
 
-                System.out.println("\nUSER INFORMATION");
-                System.out.println("----------------------------------------");
-                System.out.println("Username: " + user.username());
-                System.out.println("Full Name: " + user.fullName());
-                System.out.println("Email: " + user.email());
+                System.out.println(FormatUtils.formatHeader("USER INFORMATION"));
+                System.out.println(FormatUtils.formatBox(user.username()));
+
+                System.out.println(FormatUtils.formatHeader("DETAILS"));
+                System.out.println("  Full Name: " + user.fullName());
+                System.out.println("  Email: " + user.email());
 
                 List<RoleAssignment> assignments = am.findByUser(user);
-                System.out.println("\nASSIGNED ROLES (" + assignments.size() + ")");
-                System.out.println("----------------------------------------");
+                System.out.println(FormatUtils.formatHeader("ASSIGNED ROLES (" + assignments.size() + ")"));
 
                 if (assignments.isEmpty()) {
-                    System.out.println("No roles assigned");
+                    System.out.println("  No roles assigned");
                 } else {
+                    String[] headers = {"ROLE", "TYPE", "STATUS", "ASSIGNED BY", "ASSIGNED AT"};
+                    List<String[]> rows = new java.util.ArrayList<>();
+
                     for (RoleAssignment ra : assignments) {
-                        String status = ra.isActive() ? "ACTIVE" : "INACTIVE";
-                        System.out.println("  - " + ra.role().name() + " (" + ra.assignmentType() + ") - " + status);
-                        System.out.println("    Assigned by: " + ra.metadata().assignedBy() + " at " + ra.metadata().assignedAt());
-                        if (ra.metadata().reason() != null && !ra.metadata().reason().isBlank()) {
-                            System.out.println("    Reason: " + ra.metadata().reason());
-                        }
+                        rows.add(new String[]{
+                                ra.role().name(),
+                                ra.assignmentType(),
+                                ra.isActive() ? "ACTIVE" : "INACTIVE",
+                                ra.metadata().assignedBy(),
+                                FormatUtils.truncate(ra.metadata().assignedAt(), 16)
+                        });
                     }
+                    System.out.println(FormatUtils.formatTable(headers, rows));
                 }
 
                 var permissions = am.getUserPermissions(user);
-                System.out.println("\nALL PERMISSIONS (" + permissions.size() + ")");
-                System.out.println("----------------------------------------");
+                System.out.println(FormatUtils.formatHeader("ALL PERMISSIONS (" + permissions.size() + ")"));
 
                 if (permissions.isEmpty()) {
-                    System.out.println("No permissions");
+                    System.out.println("  No permissions");
                 } else {
+                    String[] headers = {"PERMISSION", "RESOURCE", "DESCRIPTION"};
+                    List<String[]> rows = new java.util.ArrayList<>();
+
                     for (Permission p : permissions) {
-                        System.out.println("  - " + p.name() + " on " + p.resource() + ": " + p.description());
+                        rows.add(new String[]{
+                                p.name(),
+                                p.resource(),
+                                FormatUtils.truncate(p.description(), 30)
+                        });
                     }
+                    System.out.println(FormatUtils.formatTable(headers, rows));
                 }
 
             } else {
@@ -292,12 +301,20 @@ public class CommandRegistry {
                 ConsoleUtils.printInfo("No users found with filter: " + filterDesc);
             } else {
                 ConsoleUtils.printSuccess("Search results for: " + filterDesc);
-                System.out.println("\n----------------------------------------");
+
+                String[] headers = {"USERNAME", "FULL NAME", "EMAIL"};
+                List<String[]> rows = new java.util.ArrayList<>();
+
                 for (User user : results) {
-                    System.out.println("  " + user.username() + " | " + user.fullName() + " | " + user.email());
+                    rows.add(new String[]{
+                            user.username(),
+                            FormatUtils.truncate(user.fullName(), 25),
+                            FormatUtils.truncate(user.email(), 30)
+                    });
                 }
-                System.out.println("----------------------------------------");
-                System.out.println("Total: " + results.size() + " users");
+
+                System.out.println(FormatUtils.formatTable(headers, rows));
+                ConsoleUtils.printSuccess("Total: " + results.size() + " users");
             }
         });
 
@@ -313,13 +330,18 @@ public class CommandRegistry {
                 return;
             }
 
-            System.out.println("\n----------------------------------------");
+            String[] headers = {"ROLE NAME", "PERMISSIONS", "ROLE ID"};
+            List<String[]> rows = new java.util.ArrayList<>();
+
             for (Role role : roles) {
-                System.out.println("  " + role.name() + " | " +
-                        role.getPermissions().size() + " permissions | " +
-                        role.getId());
+                rows.add(new String[]{
+                        role.name(),
+                        String.valueOf(role.getPermissions().size()),
+                        FormatUtils.truncate(role.getId(), 30)
+                });
             }
-            System.out.println("----------------------------------------");
+
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + roles.size() + " roles");
         });
 
@@ -387,8 +409,6 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("role-view", "View role", (s, sys) -> {
-            ConsoleUtils.printHeader("VIEW ROLE");
-
             String roleName = ConsoleUtils.promptString(s, "Role name: ", true);
 
             RoleManager rm = sys.getRoleManager();
@@ -396,7 +416,31 @@ public class CommandRegistry {
 
             if (roleOpt.isPresent()) {
                 Role role = roleOpt.get();
-                System.out.println(role.format());
+
+                System.out.println(FormatUtils.formatHeader("ROLE INFORMATION"));
+                System.out.println(FormatUtils.formatBox(role.name()));
+
+                System.out.println("  Description: " + role.getDescription());
+                System.out.println("  ID: " + role.getId());
+
+                System.out.println(FormatUtils.formatHeader("PERMISSIONS (" + role.getPermissions().size() + ")"));
+
+                if (role.getPermissions().isEmpty()) {
+                    System.out.println("  No permissions");
+                } else {
+                    String[] headers = {"PERMISSION", "RESOURCE", "DESCRIPTION"};
+                    List<String[]> rows = new java.util.ArrayList<>();
+
+                    for (Permission p : role.getPermissions()) {
+                        rows.add(new String[]{
+                                p.name(),
+                                p.resource(),
+                                FormatUtils.truncate(p.description(), 40)
+                        });
+                    }
+                    System.out.println(FormatUtils.formatTable(headers, rows));
+                }
+
             } else {
                 ConsoleUtils.printError("Role '" + roleName + "' not found");
             }
@@ -625,12 +669,19 @@ public class CommandRegistry {
                 ConsoleUtils.printInfo("No roles found with filter: " + filterDesc);
             } else {
                 ConsoleUtils.printSuccess("Search results for: " + filterDesc);
-                System.out.println("\n----------------------------------------");
+
+                String[] headers = {"ROLE NAME", "PERMISSIONS", "ROLE ID"};
+                List<String[]> rows = new java.util.ArrayList<>();
+
                 for (Role role : results) {
-                    System.out.println("  - " + role.name() + " (" + role.getPermissions().size() + " permissions)");
-                    System.out.println("    ID: " + role.getId());
+                    rows.add(new String[]{
+                            role.name(),
+                            String.valueOf(role.getPermissions().size()),
+                            FormatUtils.truncate(role.getId(), 30)
+                    });
                 }
-                System.out.println("----------------------------------------");
+
+                System.out.println(FormatUtils.formatTable(headers, rows));
                 ConsoleUtils.printSuccess("Total: " + results.size() + " roles");
             }
         });
@@ -778,16 +829,20 @@ public class CommandRegistry {
                 return;
             }
 
-            System.out.println("\n----------------------------------------");
+            String[] headers = {"USERNAME", "ROLE", "TYPE", "STATUS", "ASSIGNED AT"};
+            List<String[]> rows = new java.util.ArrayList<>();
+
             for (RoleAssignment ra : assignments) {
-                String status = ra.isActive() ? "ACTIVE" : "INACTIVE";
-                System.out.println("  " + ra.user().username() + " | " +
-                        ra.role().name() + " | " +
-                        ra.assignmentType() + " | " +
-                        status + " | " +
-                        ra.metadata().assignedAt());
+                rows.add(new String[]{
+                        ra.user().username(),
+                        FormatUtils.truncate(ra.role().name(), 15),
+                        ra.assignmentType(),
+                        ra.isActive() ? "ACTIVE" : "INACTIVE",
+                        FormatUtils.truncate(ra.metadata().assignedAt(), 20)
+                });
             }
-            System.out.println("----------------------------------------");
+
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + assignments.size() + " assignments");
         });
 
@@ -813,24 +868,28 @@ public class CommandRegistry {
                 return;
             }
 
-            ConsoleUtils.printInfo("Assignments for " + user.username() + " (" + user.fullName() + "):");
-            System.out.println("-".repeat(60));
+            ConsoleUtils.printSuccess("Assignments for " + user.username() + " (" + user.fullName() + ")");
+
+            String[] headers = {"ROLE", "TYPE", "STATUS", "ASSIGNED BY", "ASSIGNED AT", "EXPIRES"};
+            List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : assignments) {
-                String status = ra.isActive() ? "ACTIVE" : "INACTIVE";
-                System.out.println("\n  Role: " + ra.role().name());
-                System.out.println("  Type: " + ra.assignmentType());
-                System.out.println("  Status: " + status);
-                System.out.println("  Assigned by: " + ra.metadata().assignedBy());
-                System.out.println("  Assigned at: " + ra.metadata().assignedAt());
-                if (ra.metadata().reason() != null && !ra.metadata().reason().isBlank()) {
-                    System.out.println("  Reason: " + ra.metadata().reason());
-                }
+                String expires = "";
                 if (ra instanceof TemporaryAssignment) {
-                    System.out.println("  Expires: " + ((TemporaryAssignment) ra).getExpiresAt());
+                    expires = ((TemporaryAssignment) ra).getExpiresAt();
                 }
+
+                rows.add(new String[]{
+                        ra.role().name(),
+                        ra.assignmentType(),
+                        ra.isActive() ? "ACTIVE" : "INACTIVE",
+                        ra.metadata().assignedBy(),
+                        FormatUtils.truncate(ra.metadata().assignedAt(), 16),
+                        expires
+                });
             }
-            System.out.println("\n" + "-".repeat(60));
+
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + assignments.size() + " assignments");
         });
 
@@ -856,15 +915,21 @@ public class CommandRegistry {
                 return;
             }
 
-            ConsoleUtils.printSuccess("Users with role '" + roleName + "':");
-            System.out.println("-".repeat(50));
+            ConsoleUtils.printSuccess("Users with role '" + roleName + "'");
+
+            String[] headers = {"USERNAME", "FULL NAME", "STATUS", "ASSIGNED AT"};
+            List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : assignments) {
-                String status = ra.isActive() ? "ACTIVE" : "INACTIVE";
-                System.out.println("  - " + ra.user().username() + " (" + ra.user().fullName() + ") - " + status);
+                rows.add(new String[]{
+                        ra.user().username(),
+                        FormatUtils.truncate(ra.user().fullName(), 25),
+                        ra.isActive() ? "ACTIVE" : "INACTIVE",
+                        FormatUtils.truncate(ra.metadata().assignedAt(), 16)
+                });
             }
 
-            System.out.println("-".repeat(50));
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + assignments.size() + " users");
         });
 
@@ -878,25 +943,19 @@ public class CommandRegistry {
                 return;
             }
 
-            System.out.println("\n" + "-".repeat(75));
-            System.out.printf("| %-15s | %-15s | %-10s | %-20s |\n",
-                    "USERNAME", "ROLE", "TYPE", "ASSIGNED AT");
-            System.out.println("-".repeat(75));
+            String[] headers = {"USERNAME", "ROLE", "TYPE", "ASSIGNED AT"};
+            List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : active) {
-                String assignedAt = ra.metadata().assignedAt();
-                if (assignedAt.length() > 20) {
-                    assignedAt = assignedAt.substring(0, 17) + "...";
-                }
-
-                System.out.printf("| %-15s | %-15s | %-10s | %-20s |\n",
+                rows.add(new String[]{
                         ra.user().username(),
-                        ra.role().name().length() > 15 ? ra.role().name().substring(0, 12) + "..." : ra.role().name(),
+                        FormatUtils.truncate(ra.role().name(), 15),
                         ra.assignmentType(),
-                        assignedAt
-                );
+                        FormatUtils.truncate(ra.metadata().assignedAt(), 20)
+                });
             }
-            System.out.println("-".repeat(75));
+
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + active.size() + " active assignments");
         });
 
@@ -912,14 +971,19 @@ public class CommandRegistry {
                 return;
             }
 
-            System.out.println("\nExpired temporary assignments:");
-            System.out.println("-".repeat(60));
+            String[] headers = {"USERNAME", "ROLE", "EXPIRED AT"};
+            List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : expired) {
                 TemporaryAssignment temp = (TemporaryAssignment) ra;
-                System.out.println("  - " + ra.user().username() + " | " + ra.role().name() + " | Expired: " + temp.getExpiresAt());
+                rows.add(new String[]{
+                        ra.user().username(),
+                        ra.role().name(),
+                        temp.getExpiresAt()
+                });
             }
-            System.out.println("-".repeat(60));
+
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total: " + expired.size() + " expired assignments");
         });
 
@@ -1079,20 +1143,20 @@ public class CommandRegistry {
                 ConsoleUtils.printInfo("No assignments found with filter: " + filterDesc);
             } else {
                 ConsoleUtils.printSuccess("Search results for: " + filterDesc);
-                System.out.println("\n" + "-".repeat(70));
-                System.out.printf("| %-15s | %-15s | %-10s | %-8s |\n",
-                        "USERNAME", "ROLE", "TYPE", "STATUS");
-                System.out.println("-".repeat(70));
+
+                String[] headers = {"USERNAME", "ROLE", "TYPE", "STATUS"};
+                List<String[]> rows = new java.util.ArrayList<>();
 
                 for (RoleAssignment ra : results) {
-                    System.out.printf("| %-15s | %-15s | %-10s | %-8s |\n",
+                    rows.add(new String[]{
                             ra.user().username(),
-                            ra.role().name().length() > 15 ? ra.role().name().substring(0, 12) + "..." : ra.role().name(),
+                            FormatUtils.truncate(ra.role().name(), 15),
                             ra.assignmentType(),
                             ra.isActive() ? "ACTIVE" : "INACTIVE"
-                    );
+                    });
                 }
-                System.out.println("-".repeat(70));
+
+                System.out.println(FormatUtils.formatTable(headers, rows));
                 ConsoleUtils.printSuccess("Total: " + results.size() + " assignments");
             }
         });
@@ -1121,8 +1185,10 @@ public class CommandRegistry {
                 return;
             }
 
-            ConsoleUtils.printSuccess("Permissions for " + user.username() + " (" + user.fullName() + "):");
-            System.out.println("-".repeat(50));
+            ConsoleUtils.printSuccess("Permissions for " + user.username() + " (" + user.fullName() + ")");
+
+            String[] headers = {"RESOURCE", "ACTIONS"};
+            List<String[]> rows = new java.util.ArrayList<>();
 
             java.util.Map<String, java.util.Set<String>> groupedByResource = new java.util.HashMap<>();
 
@@ -1131,11 +1197,13 @@ public class CommandRegistry {
             }
 
             for (java.util.Map.Entry<String, java.util.Set<String>> entry : groupedByResource.entrySet()) {
-                System.out.println("\n  Resource: " + entry.getKey());
-                System.out.println("    Actions: " + String.join(", ", entry.getValue()));
+                rows.add(new String[]{
+                        entry.getKey(),
+                        String.join(", ", entry.getValue())
+                });
             }
 
-            System.out.println("\n" + "-".repeat(50));
+            System.out.println(FormatUtils.formatTable(headers, rows));
             ConsoleUtils.printSuccess("Total permissions: " + permissions.size());
         });
 
@@ -1184,10 +1252,10 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("stats", "Show system statistics", (s, sys) -> {
-            ConsoleUtils.printHeader("SYSTEM STATISTICS");
+            System.out.println(FormatUtils.formatHeader("SYSTEM STATISTICS"));
             System.out.println(sys.generateStatistics());
 
-            ConsoleUtils.printHeader("DETAILED STATISTICS");
+            System.out.println(FormatUtils.formatHeader("DETAILED STATISTICS"));
 
             UserManager um = sys.getUserManager();
             AssignmentManager am = sys.getAssignmentManager();
@@ -1196,17 +1264,21 @@ public class CommandRegistry {
             long activeAssignments = allAssignments.stream().filter(RoleAssignment::isActive).count();
             long expiredAssignments = allAssignments.size() - activeAssignments;
 
-            System.out.println("Total assignments: " + allAssignments.size());
-            System.out.println("Active assignments: " + activeAssignments);
-            System.out.println("Expired assignments: " + expiredAssignments);
+            String[] headers = {"METRIC", "VALUE"};
+            List<String[]> rows = new java.util.ArrayList<>();
+            rows.add(new String[]{"Total assignments", String.valueOf(allAssignments.size())});
+            rows.add(new String[]{"Active assignments", String.valueOf(activeAssignments)});
+            rows.add(new String[]{"Expired assignments", String.valueOf(expiredAssignments)});
 
             int userCount = um.count();
             if (userCount > 0) {
                 double avgRolesPerUser = (double) allAssignments.size() / userCount;
-                System.out.printf("Average roles per user: %.2f\n", avgRolesPerUser);
+                rows.add(new String[]{"Average roles per user", String.format("%.2f", avgRolesPerUser)});
             } else {
-                System.out.println("Average roles per user: 0");
+                rows.add(new String[]{"Average roles per user", "0"});
             }
+
+            System.out.println(FormatUtils.formatTable(headers, rows));
 
             java.util.Map<String, Long> roleCount = new java.util.HashMap<>();
             for (RoleAssignment ra : allAssignments) {
@@ -1214,14 +1286,20 @@ public class CommandRegistry {
                 roleCount.put(roleName, roleCount.getOrDefault(roleName, 0L) + 1);
             }
 
-            System.out.println("\nTop 3 most popular roles:");
-            roleCount.entrySet().stream()
-                    .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                    .limit(3)
-                    .forEach(e -> System.out.println("  - " + e.getKey() + " (" + e.getValue() + " assignments)"));
+            System.out.println(FormatUtils.formatHeader("Top 3 Most Popular Roles"));
 
             if (roleCount.isEmpty()) {
                 System.out.println("  No roles assigned yet");
+            } else {
+                String[] roleHeaders = {"ROLE", "ASSIGNMENTS"};
+                List<String[]> roleRows = new java.util.ArrayList<>();
+
+                roleCount.entrySet().stream()
+                        .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                        .limit(3)
+                        .forEach(e -> roleRows.add(new String[]{e.getKey(), String.valueOf(e.getValue())}));
+
+                System.out.println(FormatUtils.formatTable(roleHeaders, roleRows));
             }
         });
 
@@ -1431,7 +1509,25 @@ public class CommandRegistry {
             AuditLog auditLog = sys.getAuditLog();
 
             if (choice.equals("Show all entries")) {
-                auditLog.printLog();
+                List<AuditEntry> entries = auditLog.getAll();
+                if (entries.isEmpty()) {
+                    ConsoleUtils.printInfo("No audit entries found.");
+                } else {
+                    String[] headers = {"TIMESTAMP", "ACTION", "PERFORMER", "TARGET", "DETAILS"};
+                    List<String[]> rows = new java.util.ArrayList<>();
+
+                    for (AuditEntry entry : entries) {
+                        rows.add(new String[]{
+                                FormatUtils.truncate(entry.timestamp(), 19),
+                                entry.action(),
+                                entry.performer(),
+                                FormatUtils.truncate(entry.target(), 20),
+                                FormatUtils.truncate(entry.details(), 30)
+                        });
+                    }
+                    System.out.println(FormatUtils.formatTable(headers, rows));
+                    ConsoleUtils.printSuccess("Total entries: " + entries.size());
+                }
 
             } else if (choice.equals("Filter by performer")) {
                 String performer = ConsoleUtils.promptString(s, "Enter performer username: ", true);
@@ -1439,10 +1535,18 @@ public class CommandRegistry {
                 if (byPerformer.isEmpty()) {
                     ConsoleUtils.printInfo("No entries found for performer: " + performer);
                 } else {
-                    ConsoleUtils.printSuccess("Audit log (performer: " + performer + ")");
-                    for (var entry : byPerformer) {
-                        System.out.println(entry.format());
+                    String[] headers = {"TIMESTAMP", "ACTION", "TARGET", "DETAILS"};
+                    List<String[]> rows = new java.util.ArrayList<>();
+
+                    for (AuditEntry entry : byPerformer) {
+                        rows.add(new String[]{
+                                FormatUtils.truncate(entry.timestamp(), 19),
+                                entry.action(),
+                                FormatUtils.truncate(entry.target(), 25),
+                                FormatUtils.truncate(entry.details(), 30)
+                        });
                     }
+                    System.out.println(FormatUtils.formatTable(headers, rows));
                     ConsoleUtils.printSuccess("Total: " + byPerformer.size());
                 }
 
@@ -1452,10 +1556,18 @@ public class CommandRegistry {
                 if (byAction.isEmpty()) {
                     ConsoleUtils.printInfo("No entries found for action: " + action);
                 } else {
-                    ConsoleUtils.printSuccess("Audit log (action: " + action + ")");
-                    for (var entry : byAction) {
-                        System.out.println(entry.format());
+                    String[] headers = {"TIMESTAMP", "PERFORMER", "TARGET", "DETAILS"};
+                    List<String[]> rows = new java.util.ArrayList<>();
+
+                    for (AuditEntry entry : byAction) {
+                        rows.add(new String[]{
+                                FormatUtils.truncate(entry.timestamp(), 19),
+                                entry.performer(),
+                                FormatUtils.truncate(entry.target(), 25),
+                                FormatUtils.truncate(entry.details(), 35)
+                        });
                     }
+                    System.out.println(FormatUtils.formatTable(headers, rows));
                     ConsoleUtils.printSuccess("Total: " + byAction.size());
                 }
 
