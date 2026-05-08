@@ -733,12 +733,19 @@ public class CommandRegistry {
                 } else if (type.equalsIgnoreCase("temporary") || type.equals("t")) {
                     String expiresAt = ConsoleUtils.promptString(s, "Expiration date (YYYY-MM-DD): ", true);
 
-                    if (!ValidationUtils.isValidDate(expiresAt)) {
+                    if (!DateUtils.isValidDateFormat(expiresAt)) {
                         ConsoleUtils.printError("Invalid date format. Use YYYY-MM-DD");
                         return;
                     }
 
+                    if (DateUtils.isBefore(expiresAt, DateUtils.getCurrentDate())) {
+                        ConsoleUtils.printError("Expiration date must be in the future");
+                        return;
+                    }
+
                     boolean autoRenew = ConsoleUtils.promptYesNo(s, "Auto-renew?");
+
+                    ConsoleUtils.printInfo("Expires " + DateUtils.formatRelativeTime(expiresAt));
 
                     TemporaryAssignment assignment = new TemporaryAssignment(user, role, metadata, expiresAt, autoRenew);
                     am.add(assignment);
@@ -749,8 +756,7 @@ public class CommandRegistry {
                     ConsoleUtils.printSuccess("Temporary role assigned successfully!");
                     System.out.println("  User: " + username);
                     System.out.println("  Role: " + role.name());
-                    System.out.println("  Expires: " + expiresAt);
-
+                    System.out.println("  Expires: " + expiresAt + " (" + DateUtils.formatRelativeTime(expiresAt) + ")");
                 } else {
                     ConsoleUtils.printError("Invalid type. Use 'permanent' or 'temporary'");
                 }
@@ -829,16 +835,24 @@ public class CommandRegistry {
                 return;
             }
 
-            String[] headers = {"USERNAME", "ROLE", "TYPE", "STATUS", "ASSIGNED AT"};
+            String[] headers = {"USERNAME", "ROLE", "TYPE", "STATUS", "EXPIRES"};
             List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : assignments) {
+                String expiresInfo = "";
+                if (ra instanceof TemporaryAssignment) {
+                    String expiresAt = ((TemporaryAssignment) ra).getExpiresAt();
+                    expiresInfo = expiresAt + " (" + DateUtils.formatRelativeTime(expiresAt) + ")";
+                } else {
+                    expiresInfo = "PERMANENT";
+                }
+
                 rows.add(new String[]{
                         ra.user().username(),
                         FormatUtils.truncate(ra.role().name(), 15),
                         ra.assignmentType(),
                         ra.isActive() ? "ACTIVE" : "INACTIVE",
-                        FormatUtils.truncate(ra.metadata().assignedAt(), 20)
+                        FormatUtils.truncate(expiresInfo, 25)
                 });
             }
 
@@ -870,22 +884,24 @@ public class CommandRegistry {
 
             ConsoleUtils.printSuccess("Assignments for " + user.username() + " (" + user.fullName() + ")");
 
-            String[] headers = {"ROLE", "TYPE", "STATUS", "ASSIGNED BY", "ASSIGNED AT", "EXPIRES"};
+            String[] headers = {"ROLE", "TYPE", "STATUS", "EXPIRES", "ASSIGNED BY"};
             List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : assignments) {
-                String expires = "";
+                String expiresInfo = "";
                 if (ra instanceof TemporaryAssignment) {
-                    expires = ((TemporaryAssignment) ra).getExpiresAt();
+                    String expiresAt = ((TemporaryAssignment) ra).getExpiresAt();
+                    expiresInfo = expiresAt + " (" + DateUtils.formatRelativeTime(expiresAt) + ")";
+                } else {
+                    expiresInfo = "PERMANENT";
                 }
 
                 rows.add(new String[]{
                         ra.role().name(),
                         ra.assignmentType(),
                         ra.isActive() ? "ACTIVE" : "INACTIVE",
-                        ra.metadata().assignedBy(),
-                        FormatUtils.truncate(ra.metadata().assignedAt(), 16),
-                        expires
+                        FormatUtils.truncate(expiresInfo, 25),
+                        ra.metadata().assignedBy()
                 });
             }
 
@@ -917,15 +933,23 @@ public class CommandRegistry {
 
             ConsoleUtils.printSuccess("Users with role '" + roleName + "'");
 
-            String[] headers = {"USERNAME", "FULL NAME", "STATUS", "ASSIGNED AT"};
+            String[] headers = {"USERNAME", "FULL NAME", "STATUS", "EXPIRES"};
             List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : assignments) {
+                String expiresInfo = "";
+                if (ra instanceof TemporaryAssignment) {
+                    String expiresAt = ((TemporaryAssignment) ra).getExpiresAt();
+                    expiresInfo = DateUtils.formatRelativeTime(expiresAt);
+                } else {
+                    expiresInfo = "PERMANENT";
+                }
+
                 rows.add(new String[]{
                         ra.user().username(),
                         FormatUtils.truncate(ra.user().fullName(), 25),
                         ra.isActive() ? "ACTIVE" : "INACTIVE",
-                        FormatUtils.truncate(ra.metadata().assignedAt(), 16)
+                        expiresInfo
                 });
             }
 
@@ -943,15 +967,23 @@ public class CommandRegistry {
                 return;
             }
 
-            String[] headers = {"USERNAME", "ROLE", "TYPE", "ASSIGNED AT"};
+            String[] headers = {"USERNAME", "ROLE", "TYPE", "EXPIRES"};
             List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : active) {
+                String expiresInfo = "";
+                if (ra instanceof TemporaryAssignment) {
+                    String expiresAt = ((TemporaryAssignment) ra).getExpiresAt();
+                    expiresInfo = expiresAt + " (" + DateUtils.formatRelativeTime(expiresAt) + ")";
+                } else {
+                    expiresInfo = "PERMANENT";
+                }
+
                 rows.add(new String[]{
                         ra.user().username(),
                         FormatUtils.truncate(ra.role().name(), 15),
                         ra.assignmentType(),
-                        FormatUtils.truncate(ra.metadata().assignedAt(), 20)
+                        FormatUtils.truncate(expiresInfo, 25)
                 });
             }
 
@@ -971,7 +1003,7 @@ public class CommandRegistry {
                 return;
             }
 
-            String[] headers = {"USERNAME", "ROLE", "EXPIRED AT"};
+            String[] headers = {"USERNAME", "ROLE", "EXPIRED", "EXPIRED AGO"};
             List<String[]> rows = new java.util.ArrayList<>();
 
             for (RoleAssignment ra : expired) {
@@ -979,7 +1011,8 @@ public class CommandRegistry {
                 rows.add(new String[]{
                         ra.user().username(),
                         ra.role().name(),
-                        temp.getExpiresAt()
+                        temp.getExpiresAt(),
+                        DateUtils.formatRelativeTime(temp.getExpiresAt())
                 });
             }
 
@@ -1047,11 +1080,18 @@ public class CommandRegistry {
             }
 
             if (temp != null) {
-                ConsoleUtils.printInfo("Current expiration: " + temp.getExpiresAt());
+                ConsoleUtils.printInfo("Current expiration: " + temp.getExpiresAt() +
+                        " (" + DateUtils.formatRelativeTime(temp.getExpiresAt()) + ")");
+
                 String newDate = ConsoleUtils.promptString(s, "New expiration date (YYYY-MM-DD): ", true);
 
-                if (!ValidationUtils.isValidDate(newDate)) {
+                if (!DateUtils.isValidDateFormat(newDate)) {
                     ConsoleUtils.printError("Invalid date format. Use YYYY-MM-DD");
+                    return;
+                }
+
+                if (DateUtils.isBefore(newDate, DateUtils.getCurrentDate())) {
+                    ConsoleUtils.printError("New expiration date must be in the future");
                     return;
                 }
 
@@ -1059,7 +1099,7 @@ public class CommandRegistry {
                 ConsoleUtils.printSuccess("Assignment extended successfully!");
                 System.out.println("  User: " + temp.user().username());
                 System.out.println("  Role: " + temp.role().name());
-                System.out.println("  New expiration: " + newDate);
+                System.out.println("  New expiration: " + newDate + " (" + DateUtils.formatRelativeTime(newDate) + ")");
             }
         });
 
@@ -1120,18 +1160,30 @@ public class CommandRegistry {
 
                 } else if (choice.equals("Assigned after date")) {
                     String date = ConsoleUtils.promptString(s, "Date (YYYY-MM-DD): ", true);
+
+                    if (!DateUtils.isValidDateFormat(date)) {
+                        ConsoleUtils.printError("Invalid date format");
+                        return;
+                    }
+
                     results = allAssignments.stream()
-                            .filter(ra -> ra.metadata().assignedAt().compareTo(date) > 0)
+                            .filter(ra -> DateUtils.isAfter(ra.metadata().assignedAt().substring(0, 10), date))
                             .collect(java.util.stream.Collectors.toList());
-                    filterDesc = "assigned after " + date;
+                    filterDesc = "assigned after " + date + " (" + DateUtils.formatRelativeTime(date) + ")";
 
                 } else {
                     String date = ConsoleUtils.promptString(s, "Date (YYYY-MM-DD): ", true);
+
+                    if (!DateUtils.isValidDateFormat(date)) {
+                        ConsoleUtils.printError("Invalid date format");
+                        return;
+                    }
+
                     results = allAssignments.stream()
                             .filter(ra -> ra instanceof TemporaryAssignment)
-                            .filter(ra -> ((TemporaryAssignment) ra).getExpiresAt().compareTo(date) < 0)
+                            .filter(ra -> DateUtils.isBefore(((TemporaryAssignment) ra).getExpiresAt(), date))
                             .collect(java.util.stream.Collectors.toList());
-                    filterDesc = "expiring before " + date;
+                    filterDesc = "expiring before " + date + " (" + DateUtils.formatRelativeTime(date) + ")";
                 }
 
             } catch (Exception e) {

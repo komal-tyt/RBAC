@@ -23,15 +23,7 @@ public class ValidationUtils {
     }
 
     public static boolean isValidDate(String date) {
-        if (date == null || date.isBlank()) {
-            return false;
-        }
-        try {
-            LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
-            return true;
-        } catch (DateTimeParseException e) {
-            return false;
-        }
+        return DateUtils.isValidDateFormat(date);
     }
 
     public static String normalizeString(String input) {
@@ -46,6 +38,5 @@ public class ValidationUtils {
             throw new IllegalArgumentException(fieldName + " cannot be empty");
         }
     }
-
 
 }
