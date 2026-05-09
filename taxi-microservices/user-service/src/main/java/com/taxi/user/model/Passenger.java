@@ -27,6 +27,9 @@ public class Passenger {
     @Column(nullable = false)
     private String phone;
 
+    @Column(nullable = false)
+    private String password;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

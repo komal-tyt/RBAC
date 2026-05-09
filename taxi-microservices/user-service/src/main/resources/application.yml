@@ -43,3 +43,7 @@ cache:
 logging:
   level:
     com.taxi: DEBUG
+
+jwt:
+  secret: "c2VjcmV0LWtleS1mb3Itand0LXRva2VuLXNpZ25pbmctMjU2LWJpdC1sb25nLXNlY3JldC1rZXkK"
+  expiration: 86400000  # 24 часа в миллисекундах
