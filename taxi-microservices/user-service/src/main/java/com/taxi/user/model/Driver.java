@@ -37,4 +37,13 @@ public class Driver {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "rating")
+    private Double rating = 0.0;
+
+    @Column(name = "total_ratings")
+    private Integer totalRatings = 0;
+
+    @Column(name = "rating_sum")
+    private Integer ratingSum = 0;
 }

@@ -28,4 +28,7 @@ public class DriverDto {
     private String licenseNumber;
 
     private DriverStatus status;
+
+    private Double rating;
+    private Integer totalRatings;
 }

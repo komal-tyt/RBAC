@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/drivers")
@@ -69,5 +70,18 @@ public class DriverController {
         log.debug("GET /drivers/{}/exists - Checking if driver exists", id);
         boolean exists = driverService.existsDriver(id);
         return ResponseEntity.ok(exists);
+    }
+
+    @PostMapping("/{id}/rate")
+    public ResponseEntity<Void> rateDriver(
+            @PathVariable Long id,
+            @RequestBody Map<String, Integer> request) {
+        log.info("POST /drivers/{}/rate - Rating driver with {} stars", id, request.get("stars"));
+        Integer stars = request.get("stars");
+        if (stars == null || stars < 1 || stars > 5) {
+            throw new RuntimeException("Invalid rating. Must be between 1 and 5");
+        }
+        driverService.updateDriverRating(id, stars);
+        return ResponseEntity.ok().build();
     }
 }

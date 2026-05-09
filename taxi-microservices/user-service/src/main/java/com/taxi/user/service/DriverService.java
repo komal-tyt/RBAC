@@ -34,7 +34,7 @@ public class DriverService {
         driver.setEmail(driverDto.getEmail());
         driver.setPhone(driverDto.getPhone());
         driver.setLicenseNumber(driverDto.getLicenseNumber());
-        driver.setStatus(DriverStatus.OFFLINE); // Initially offline
+        driver.setStatus(DriverStatus.OFFLINE);
 
         Driver saved = driverRepository.save(driver);
         log.info("Driver registered successfully with id: {}", saved.getId());
@@ -104,7 +104,28 @@ public class DriverService {
                 driver.getEmail(),
                 driver.getPhone(),
                 driver.getLicenseNumber(),
-                driver.getStatus()
+                driver.getStatus(),
+                driver.getRating(),
+                driver.getTotalRatings()
         );
+    }
+
+    @Transactional
+    public void updateDriverRating(Long driverId, Integer stars) {
+        log.info("Updating driver {} rating with {} stars", driverId, stars);
+
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new RuntimeException("Driver not found: " + driverId));
+
+        int newSum = (driver.getRatingSum() == null ? 0 : driver.getRatingSum()) + stars;
+        int newCount = (driver.getTotalRatings() == null ? 0 : driver.getTotalRatings()) + 1;
+        double newRating = (double) newSum / newCount;
+
+        driver.setRatingSum(newSum);
+        driver.setTotalRatings(newCount);
+        driver.setRating(Math.round(newRating * 10.0) / 10.0);
+
+        driverRepository.save(driver);
+        log.info("Driver {} new rating: {} (from {} ratings)", driverId, driver.getRating(), newCount);
     }
 }
