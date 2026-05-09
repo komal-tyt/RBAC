@@ -27,7 +27,7 @@ public class Passenger {
     @Column(nullable = false)
     private String phone;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @CreationTimestamp

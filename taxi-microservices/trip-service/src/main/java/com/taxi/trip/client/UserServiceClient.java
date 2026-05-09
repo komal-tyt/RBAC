@@ -2,6 +2,7 @@ package com.taxi.trip.client;
 
 import com.taxi.trip.dto.DriverDto;
 import com.taxi.trip.dto.TariffDto;
+import com.taxi.trip.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,9 +17,17 @@ import java.util.Optional;
 @Slf4j
 public class UserServiceClient {
     private final WebClient.Builder webClientBuilder;
+    private final JwtService jwtService;
 
     @Value("${user-service.url}")
     private String userServiceUrl;
+
+    @Value("${spring.application.name:trip-service}")
+    private String serviceName;
+
+    private String authHeaderValue() {
+        return "Bearer " + jwtService.generateServiceToken(serviceName);
+    }
 
     public boolean checkPassengerExists(Long passengerId) {
         try {
@@ -26,6 +35,7 @@ public class UserServiceClient {
             Boolean exists = webClientBuilder.build()
                     .get()
                     .uri(userServiceUrl + "/passengers/{id}/exists", passengerId)
+                    .header("Authorization", authHeaderValue())
                     .retrieve()
                     .bodyToMono(Boolean.class)
                     .block();
@@ -45,6 +55,7 @@ public class UserServiceClient {
             DriverDto driver = webClientBuilder.build()
                     .get()
                     .uri(userServiceUrl + "/drivers/available")
+                    .header("Authorization", authHeaderValue())
                     .retrieve()
                     .bodyToMono(DriverDto.class)
                     .block();
@@ -64,6 +75,7 @@ public class UserServiceClient {
             DriverDto driver = webClientBuilder.build()
                     .post()
                     .uri(userServiceUrl + "/drivers/assign")
+                    .header("Authorization", authHeaderValue())
                     .retrieve()
                     .bodyToMono(DriverDto.class)
                     .block();
@@ -86,6 +98,7 @@ public class UserServiceClient {
             webClientBuilder.build()
                     .patch()
                     .uri(userServiceUrl + "/drivers/{id}/status", driverId)
+                    .header("Authorization", authHeaderValue())
                     .header("Content-Type", "application/json")
                     .bodyValue(requestBody)
                     .retrieve()
@@ -108,6 +121,7 @@ public class UserServiceClient {
             webClientBuilder.build()
                     .post()
                     .uri(userServiceUrl + "/drivers/{id}/rate", driverId)
+                    .header("Authorization", authHeaderValue())
                     .header("Content-Type", "application/json")
                     .bodyValue(requestBody)
                     .retrieve()
@@ -126,6 +140,7 @@ public class UserServiceClient {
             return webClientBuilder.build()
                     .get()
                     .uri(userServiceUrl + "/tariffs/{name}", name)
+                    .header("Authorization", authHeaderValue())
                     .retrieve()
                     .bodyToMono(TariffDto.class)
                     .block();
@@ -144,6 +159,7 @@ public class UserServiceClient {
             return webClientBuilder.build()
                     .get()
                     .uri(userServiceUrl + "/tariffs/active")
+                    .header("Authorization", authHeaderValue())
                     .retrieve()
                     .bodyToMono(TariffDto.class)
                     .block();

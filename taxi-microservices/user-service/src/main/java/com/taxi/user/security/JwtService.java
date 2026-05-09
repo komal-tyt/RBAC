@@ -3,6 +3,7 @@ package com.taxi.user.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class JwtService {
     private Long expiration;
 
     private Key getSigningKey() {
-        byte[] keyBytes = secret.getBytes();
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -32,6 +33,13 @@ public class JwtService {
         claims.put("userId", userId);
         claims.put("role", role);
         return createToken(claims, email);
+    }
+
+    public String generateServiceToken(String serviceName) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", 0L);
+        claims.put("role", "SERVICE");
+        return createToken(claims, serviceName);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {

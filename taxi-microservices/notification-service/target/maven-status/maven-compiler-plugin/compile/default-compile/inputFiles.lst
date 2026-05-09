@@ -1,10 +1,13 @@
-D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\controller\NotificationController.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\dto\NotificationResponseDto.java
-D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\repository\NotificationRepository.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\security\JwtAuthenticationFilter.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\service\NotificationService.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\NotificationServiceApplication.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\exception\GlobalExceptionHandler.java
-D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\model\NotificationStatus.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\model\NotificationTask.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\worker\NotificationWorker.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\controller\NotificationController.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\config\SecurityConfig.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\repository\NotificationRepository.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\security\JwtService.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\model\NotificationStatus.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\notification-service\src\main\java\com\taxi\notification\dto\NotificationRequestDto.java

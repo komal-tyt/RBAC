@@ -38,7 +38,7 @@ public class Driver {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(name = "rating")

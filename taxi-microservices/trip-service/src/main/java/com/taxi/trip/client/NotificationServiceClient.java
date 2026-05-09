@@ -1,6 +1,7 @@
 package com.taxi.trip.client;
 
 import com.taxi.trip.dto.NotificationRequestDto;
+import com.taxi.trip.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,15 +13,24 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Slf4j
 public class NotificationServiceClient {
     private final WebClient.Builder webClientBuilder;
+    private final JwtService jwtService;
 
     @Value("${notification-service.url}")
     private String notificationServiceUrl;
+
+    @Value("${spring.application.name:trip-service}")
+    private String serviceName;
+
+    private String authHeaderValue() {
+        return "Bearer " + jwtService.generateServiceToken(serviceName);
+    }
 
     public void createNotification(NotificationRequestDto request) {
         try {
             webClientBuilder.build()
                     .post()
                     .uri(notificationServiceUrl + "/notifications")
+                    .header("Authorization", authHeaderValue())
                     .bodyValue(request)
                     .retrieve()
                     .toBodilessEntity()
