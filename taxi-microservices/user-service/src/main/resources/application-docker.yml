@@ -1,0 +1,8 @@
+# Профиль docker: Redis и межсервисные URL по именам контейнеров
+spring:
+  data:
+    redis:
+      host: redis
+
+notification-service:
+  url: http://notification-service:8083
