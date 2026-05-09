@@ -1,6 +1,7 @@
 com\taxi\trip\dto\UpdateTripStatusRequest.class
 com\taxi\trip\repository\TripRepository.class
 com\taxi\trip\exception\GlobalExceptionHandler.class
+com\taxi\trip\dto\RateTripRequest.class
 com\taxi\trip\model\TripStatus.class
 com\taxi\trip\model\Trip.class
 com\taxi\trip\client\NotificationServiceClient.class

@@ -4,6 +4,7 @@ D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\tri
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\controller\TripController.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\dto\DriverDto.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\exception\GlobalExceptionHandler.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\dto\RateTripRequest.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\dto\UpdateTripStatusRequest.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\client\UserServiceClient.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\TripServiceApplication.java
