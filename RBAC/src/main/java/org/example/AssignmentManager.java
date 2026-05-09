@@ -294,4 +294,19 @@ public class AssignmentManager implements Repository<RoleAssignment> {
             lock.writeLock().unlock();
         }
     }
+
+    public List<RoleAssignment> findByFilterParallel(AssignmentFilter filter) {
+        if (filter == null) {
+            return findAll();
+        }
+
+        lock.readLock().lock();
+        try {
+            return roleAssignmentByAssignments.values().parallelStream()
+                    .filter(filter::test)
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 }

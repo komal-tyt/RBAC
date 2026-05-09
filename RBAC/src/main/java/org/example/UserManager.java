@@ -172,4 +172,19 @@ public class UserManager implements Repository<User> {
             lock.writeLock().unlock();
         }
     }
+
+    public List<User> findByFilterParallel(UserFilter filter) {
+        if (filter == null) {
+            return findAll();
+        }
+
+        lock.readLock().lock();
+        try {
+            return usersByUsername.values().parallelStream()
+                    .filter(filter::test)
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 }

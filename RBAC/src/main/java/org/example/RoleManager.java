@@ -218,4 +218,19 @@ public class RoleManager implements Repository<Role> {
             lock.readLock().unlock();
         }
     }
+
+    public List<Role> findByFilterParallel(RoleFilter filter) {
+        if (filter == null) {
+            return findAll();
+        }
+
+        lock.readLock().lock();
+        try {
+            return rolesById.values().parallelStream()
+                    .filter(filter::test)
+                    .collect(Collectors.toList());
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
 }

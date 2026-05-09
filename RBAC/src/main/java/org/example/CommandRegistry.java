@@ -1689,5 +1689,64 @@ public class CommandRegistry {
             }
         });
 
+        parser.registerCommand("report-users-parallel", "Generate user report (parallel)", (s, sys) -> {
+            ConsoleUtils.printHeader("GENERATE USER REPORT (PARALLEL)");
+
+            ReportGenerator generator = new ReportGenerator();
+            String report = generator.generateUserReportParallel(sys.getUserManager(), sys.getAssignmentManager());
+
+            boolean saveToFile = ConsoleUtils.promptYesNo(s, "Save to file?");
+
+            if (saveToFile) {
+                String filename = ConsoleUtils.promptString(s, "Enter filename (default: user_report_parallel.txt): ", false);
+                if (filename == null || filename.isEmpty()) {
+                    filename = "user_report_parallel.txt";
+                }
+                generator.exportToFile(report, filename);
+            } else {
+                System.out.println(report);
+            }
+        });
+
+
+        parser.registerCommand("report-roles-parallel", "Generate role report (parallel)", (s, sys) -> {
+            ConsoleUtils.printHeader("GENERATE ROLE REPORT (PARALLEL)");
+
+            ReportGenerator generator = new ReportGenerator();
+            String report = generator.generateRoleReportParallel(sys.getRoleManager(), sys.getAssignmentManager());
+
+            boolean saveToFile = ConsoleUtils.promptYesNo(s, "Save to file?");
+
+            if (saveToFile) {
+                String filename = ConsoleUtils.promptString(s, "Enter filename (default: role_report_parallel.txt): ", false);
+                if (filename == null || filename.isEmpty()) {
+                    filename = "role_report_parallel.txt";
+                }
+                generator.exportToFile(report, filename);
+            } else {
+                System.out.println(report);
+            }
+        });
+
+
+        parser.registerCommand("report-matrix-parallel", "Generate permission matrix (parallel)", (s, sys) -> {
+            ConsoleUtils.printHeader("GENERATE PERMISSION MATRIX (PARALLEL)");
+
+            ReportGenerator generator = new ReportGenerator();
+            String report = generator.generatePermissionMatrixParallel(sys.getUserManager(), sys.getAssignmentManager());
+
+            boolean saveToFile = ConsoleUtils.promptYesNo(s, "Save to file?");
+
+            if (saveToFile) {
+                String filename = ConsoleUtils.promptString(s, "Enter filename (default: matrix_report_parallel.txt): ", false);
+                if (filename == null || filename.isEmpty()) {
+                    filename = "matrix_report_parallel.txt";
+                }
+                generator.exportToFile(report, filename);
+            } else {
+                System.out.println(report);
+            }
+        });
+
     }
 }
