@@ -117,4 +117,42 @@ public class UserServiceClient {
             log.error("Error updating driver {} rating: {}", driverId, e.getMessage());
         }
     }
+
+    public TariffDto getTariff(String name) {
+        try {
+            log.debug("Getting tariff: {}", name);
+            return webClientBuilder.build()
+                    .get()
+                    .uri(userServiceUrl + "/tariffs/{name}", name)
+                    .retrieve()
+                    .bodyToMono(TariffDto.class)
+                    .block();
+        } catch (WebClientResponseException.NotFound e) {
+            log.warn("Tariff {} not found, using default", name);
+            return getDefaultTariff();
+        } catch (Exception e) {
+            log.error("Error getting tariff {}: {}", name, e.getMessage());
+            return getDefaultTariff();
+        }
+    }
+
+    public TariffDto getDefaultTariff() {
+        try {
+            log.debug("Getting default tariff");
+            return webClientBuilder.build()
+                    .get()
+                    .uri(userServiceUrl + "/tariffs/active")
+                    .retrieve()
+                    .bodyToMono(TariffDto.class)
+                    .block();
+        } catch (Exception e) {
+            log.error("Error getting default tariff: {}", e.getMessage());
+            TariffDto fallback = new TariffDto();
+            fallback.setName("STANDARD");
+            fallback.setBasePrice(49.0);
+            fallback.setPricePerKm(20.0);
+            fallback.setPricePerMinute(5.0);
+            return fallback;
+        }
+    }
 }

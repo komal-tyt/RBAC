@@ -1,44 +1,33 @@
-package com.taxi.user;
+package com.taxi.trip.service;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
-@SpringBootApplication
-public class UserServiceApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(UserServiceApplication.class, args);
+@Service
+@Slf4j
+public class DistanceCalculator {
+
+    private static final double EARTH_RADIUS_KM = 6371.0;
+
+    public double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double distance = EARTH_RADIUS_KM * c;
+
+        return Math.round(distance * 100.0) / 100.0;
     }
 
-    @Bean
-    public CommandLineRunner initTariffs(TariffRepository tariffRepository) {
-        return args -> {
-            if (tariffRepository.count() == 0) {
-                Tariff standard = new Tariff();
-                standard.setName("STANDARD");
-                standard.setBasePrice(49.0);
-                standard.setPricePerKm(20.0);
-                standard.setPricePerMinute(5.0);
-                standard.setActive(true);
-                tariffRepository.save(standard);
-
-                Tariff comfort = new Tariff();
-                comfort.setName("COMFORT");
-                comfort.setBasePrice(99.0);
-                comfort.setPricePerKm(35.0);
-                comfort.setPricePerMinute(8.0);
-                comfort.setActive(true);
-                tariffRepository.save(comfort);
-
-                Tariff business = new Tariff();
-                business.setName("BUSINESS");
-                business.setBasePrice(199.0);
-                business.setPricePerKm(50.0);
-                business.setPricePerMinute(12.0);
-                business.setActive(true);
-                tariffRepository.save(business);
-
-                log.info("Initialized default tariffs: STANDARD, COMFORT, BUSINESS");
-            }
-        };
+ double estimateByAddress(String origin, String destination) {
+        int originLen = origin == null ? 0 : origin.length();
+        int destLen = destination == null ? 0 : destination.length();
+        double distance = Math.max(1.0, (originLen + destLen) * 0.3);
+        return Math.round(distance * 100.0) / 100.0;
     }
 }

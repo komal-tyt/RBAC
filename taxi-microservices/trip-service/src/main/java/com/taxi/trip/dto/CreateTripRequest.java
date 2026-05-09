@@ -18,4 +18,17 @@ public class CreateTripRequest {
 
     @NotBlank(message = "Destination is required")
     private String destination;
+
+    private Double originLat;
+    private Double originLng;
+    private Double destLat;
+    private Double destLng;
+
+    private String tariffName = "STANDARD";
+
+    private Double estimatedDistanceKm;
+
+    public boolean hasCoordinates() {
+        return originLat != null && originLng != null && destLat != null && destLng != null;
+    }
 }

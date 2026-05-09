@@ -25,6 +25,7 @@ public class TripService {
     private final TripRepository tripRepository;
     private final UserServiceClient userServiceClient;
     private final NotificationServiceClient notificationServiceClient;
+    private final DistanceCalculator distanceCalculator;
 
     @Transactional
     public TripResponseDto createTrip(CreateTripRequest request) {
@@ -39,6 +40,9 @@ public class TripService {
         trip.setOrigin(request.getOrigin());
         trip.setDestination(request.getDestination());
         trip.setStatus(TripStatus.PENDING);
+
+        trip.setPrice(calculatePrice(request));
+        log.info("Calculated price: {} for trip", trip.getPrice());
 
         Trip savedTrip = tripRepository.save(trip);
         log.info("Trip created with id: {}", savedTrip.getId());
@@ -135,6 +139,17 @@ public class TripService {
                 log.info("Trip {} cancelled", id);
                 break;
 
+            case COMPLETED:
+                if (oldStatus != TripStatus.IN_PROGRESS) {
+                    throw new RuntimeException("Cannot complete trip that is not in progress");
+                }
+                if (trip.getDriverId() != null) {
+                    userServiceClient.updateDriverStatus(trip.getDriverId(), "ONLINE");
+                    log.info("Driver {} released back to ONLINE", trip.getDriverId());
+                }
+                log.info("Trip {} completed with price: {}", id, trip.getPrice());
+                break;
+
             default:
                 break;
         }
@@ -215,5 +230,36 @@ public class TripService {
 
         log.info("Trip {} rated successfully", tripId);
         return convertToDto(trip);
+    }
+
+    private Double calculatePrice(CreateTripRequest request) {
+        double distanceKm;
+
+        if (request.hasCoordinates()) {
+            distanceKm = distanceCalculator.calculateDistance(
+                    request.getOriginLat(), request.getOriginLng(),
+                    request.getDestLat(), request.getDestLng()
+            );
+            log.info("Calculated distance: {} km using coordinates", distanceKm);
+        }
+        else if (request.getEstimatedDistanceKm() != null) {
+            distanceKm = request.getEstimatedDistanceKm();
+            log.info("Using estimated distance: {} km", distanceKm);
+        }
+        else {
+            distanceKm = distanceCalculator.estimateByAddress(request.getOrigin(), request.getDestination());
+            log.info("Estimated distance: {} km by address heuristic", distanceKm);
+        }
+
+        TariffDto tariff = userServiceClient.getTariff(request.getTariffName());
+        if (tariff == null) {
+            tariff = userServiceClient.getDefaultTariff();
+        }
+        log.info("Using tariff: {}, basePrice={}, pricePerKm={}",
+                tariff.getName(), tariff.getBasePrice(), tariff.getPricePerKm());
+
+        double price = tariff.getBasePrice() + (tariff.getPricePerKm() * distanceKm);
+
+        return Math.round(price * 100.0) / 100.0;
     }
 }
