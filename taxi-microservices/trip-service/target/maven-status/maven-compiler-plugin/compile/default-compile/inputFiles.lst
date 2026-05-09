@@ -12,6 +12,7 @@ D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\tri
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\TripServiceApplication.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\model\TripStatus.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\dto\NotificationRequestDto.java
+D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\dto\TripDayStatisticsDto.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\service\DistanceCalculator.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\dto\CreateTripRequest.java
 D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\src\main\java\com\taxi\trip\model\Trip.java

@@ -6,6 +6,7 @@ import com.taxi.trip.dto.CreateTripRequest;
 import com.taxi.trip.dto.DriverDto;
 import com.taxi.trip.dto.NotificationRequestDto;
 import com.taxi.trip.dto.TariffDto;
+import com.taxi.trip.dto.TripDayStatisticsDto;
 import com.taxi.trip.dto.TripResponseDto;
 import com.taxi.trip.model.Trip;
 import com.taxi.trip.model.TripStatus;
@@ -15,6 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -92,6 +96,23 @@ public class TripService {
         return trips.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    public TripDayStatisticsDto getDailyStatistics(LocalDate date) {
+        LocalDate day = date != null ? date : LocalDate.now();
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDateTime start = day.atStartOfDay(zone).toLocalDateTime();
+        LocalDateTime end = day.plusDays(1).atStartOfDay(zone).toLocalDateTime();
+
+        Object[] row = tripRepository.aggregateTripsCreatedBetween(start, end);
+        long tripCount = ((Number) row[0]).longValue();
+        Double averagePrice = null;
+        if (row[1] != null) {
+            double raw = ((Number) row[1]).doubleValue();
+            averagePrice = Math.round(raw * 100.0) / 100.0;
+        }
+
+        return new TripDayStatisticsDto(day, tripCount, averagePrice);
     }
 
     @Transactional

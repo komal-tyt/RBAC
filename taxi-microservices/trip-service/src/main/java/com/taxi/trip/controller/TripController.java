@@ -1,6 +1,7 @@
 package com.taxi.trip.controller;
 
 import com.taxi.trip.dto.CreateTripRequest;
+import com.taxi.trip.dto.TripDayStatisticsDto;
 import com.taxi.trip.dto.TripResponseDto;
 import com.taxi.trip.dto.UpdateTripStatusRequest;
 import com.taxi.trip.model.TripStatus;
@@ -10,8 +11,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -40,6 +43,13 @@ public class TripController {
         log.info("GET /trips?passenger_id={} - Fetching passenger trip history", passengerId);
         List<TripResponseDto> trips = tripService.getTripsByPassenger(passengerId);
         return ResponseEntity.ok(trips);
+    }
+
+    @GetMapping("/statistics/daily")
+    public ResponseEntity<TripDayStatisticsDto> getDailyStatistics(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        log.info("GET /trips/statistics/daily date={}", date);
+        return ResponseEntity.ok(tripService.getDailyStatistics(date));
     }
 
     @PatchMapping("/{id}/status")

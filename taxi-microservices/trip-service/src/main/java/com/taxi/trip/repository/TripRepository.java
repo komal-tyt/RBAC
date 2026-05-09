@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,7 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Modifying
     @Query("UPDATE Trip t SET t.driverId = :driverId, t.status = 'ACCEPTED' WHERE t.id = :id AND t.status = 'PENDING'")
     int assignDriver(@Param("id") Long id, @Param("driverId") Long driverId);
+
+    @Query("SELECT COUNT(t), AVG(t.price) FROM Trip t WHERE t.createdAt >= :start AND t.createdAt < :end")
+    Object[] aggregateTripsCreatedBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }
