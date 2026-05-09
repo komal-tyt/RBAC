@@ -1748,5 +1748,91 @@ public class CommandRegistry {
             }
         });
 
+        parser.registerCommand("report-users-async", "Generate user report (async)", (s, sys) -> {
+            ConsoleUtils.printHeader("GENERATE USER REPORT (ASYNC)");
+
+            ConsoleUtils.printInfo("Starting background task...");
+
+            sys.getBackgroundExecutor().submit(() -> {
+                try {
+                    ReportGenerator generator = new ReportGenerator();
+                    String report = generator.generateUserReport(sys.getUserManager(), sys.getAssignmentManager());
+
+                    System.out.println(report);
+
+                    ConsoleUtils.printSuccess("User report generation completed!");
+                    sys.getAuditLog().log("REPORT_USERS_ASYNC", sys.getCurrentUser(), "system", "Async user report generated");
+
+                } catch (Exception e) {
+                    ConsoleUtils.printError("Error generating report: " + e.getMessage());
+                }
+                return null;
+            });
+
+            ConsoleUtils.printSuccess("Task submitted to background executor! Check later for results.");
+        });
+
+        parser.registerCommand("save-async", "Save data to file (async)", (s, sys) -> {
+            ConsoleUtils.printHeader("SAVE DATA (ASYNC)");
+
+            String filename = ConsoleUtils.promptString(s, "Enter filename (default: rbac_data_async.txt): ", false);
+            if (filename == null || filename.isEmpty()) {
+                filename = "rbac_data_async.txt";
+            }
+
+            final String finalFilename = filename;
+
+            ConsoleUtils.printInfo("Starting background save to '" + finalFilename + "'...");
+
+            sys.getBackgroundExecutor().submit(() -> {
+                try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(finalFilename))) {
+
+                    writer.println("[USERS]");
+                    for (User user : sys.getUserManager().findAll()) {
+                        writer.println(user.username() + "|" + user.fullName() + "|" + user.email());
+                    }
+
+                    writer.println("\n[ROLES]");
+                    for (Role role : sys.getRoleManager().findAll()) {
+                        writer.print(role.name() + "|" + role.getDescription());
+                        for (Permission p : role.getPermissions()) {
+                            writer.print("|" + p.name() + ":" + p.resource() + ":" + p.description());
+                        }
+                        writer.println();
+                    }
+
+                    writer.println("\n[ASSIGNMENTS]");
+                    for (RoleAssignment ra : sys.getAssignmentManager().findAll()) {
+                        String type = ra.assignmentType();
+                        String status = ra.isActive() ? "ACTIVE" : "INACTIVE";
+                        writer.print(ra.user().username() + "|" + ra.role().name() + "|" + type + "|" + status);
+                        writer.print("|" + ra.metadata().assignedBy() + "|" + ra.metadata().assignedAt() + "|" + ra.metadata().reason());
+                        if (ra instanceof TemporaryAssignment) {
+                            writer.print("|" + ((TemporaryAssignment) ra).getExpiresAt());
+                        }
+                        writer.println();
+                    }
+
+                    ConsoleUtils.printSuccess("Data saved to '" + finalFilename + "' successfully!");
+                    sys.getAuditLog().log("SAVE_ASYNC", sys.getCurrentUser(), finalFilename, "Async data save");
+
+                } catch (java.io.IOException e) {
+                    ConsoleUtils.printError("Error saving data: " + e.getMessage());
+                    sys.getAuditLog().log("SAVE_ASYNC_ERROR", sys.getCurrentUser(), finalFilename, "Error: " + e.getMessage());
+                }
+                return null;
+            });
+
+            ConsoleUtils.printSuccess("Save task submitted to background executor!");
+        });
+
+        parser.registerCommand("save-async-status", "Check background executor status", (s, sys) -> {
+            ConsoleUtils.printHeader("BACKGROUND EXECUTOR STATUS");
+
+            ConsoleUtils.printInfo("Executor is ready for async tasks.");
+            ConsoleUtils.printInfo("Active threads: " + Thread.getAllStackTraces().size());
+            sys.getAuditLog().log("CHECK_ASYNC_STATUS", sys.getCurrentUser(), "system", "Status check");
+        });
+
     }
 }
