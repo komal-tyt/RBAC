@@ -16,6 +16,7 @@ import java.util.Optional;
 @Slf4j
 public class DriverService {
     private final DriverRepository driverRepository;
+    private final DriverCacheService driverCacheService;
 
     @Transactional
     public DriverDto registerDriver(DriverDto driverDto) {
@@ -111,21 +112,25 @@ public class DriverService {
     }
 
     @Transactional
-    public void updateDriverRating(Long driverId, Integer stars) {
-        log.info("Updating driver {} rating with {} stars", driverId, stars);
+    public DriverDto updateDriverStatus(Long id, DriverStatus newStatus) {
+        log.info("Updating driver {} status to: {}", id, newStatus);
 
-        Driver driver = driverRepository.findById(driverId)
-                .orElseThrow(() -> new RuntimeException("Driver not found: " + driverId));
+        Driver driver = driverRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Driver not found with id: " + id));
 
-        int newSum = (driver.getRatingSum() == null ? 0 : driver.getRatingSum()) + stars;
-        int newCount = (driver.getTotalRatings() == null ? 0 : driver.getTotalRatings()) + 1;
-        double newRating = (double) newSum / newCount;
+        DriverStatus oldStatus = driver.getStatus();
+        driver.setStatus(newStatus);
+        Driver updated = driverRepository.save(driver);
 
-        driver.setRatingSum(newSum);
-        driver.setTotalRatings(newCount);
-        driver.setRating(Math.round(newRating * 10.0) / 10.0);
+        if (newStatus == DriverStatus.ONLINE && oldStatus != DriverStatus.ONLINE) {
+            driverCacheService.addAvailableDriver(id);
+            log.info("Driver {} added to available cache", id);
+        } else if (oldStatus == DriverStatus.ONLINE && newStatus != DriverStatus.ONLINE) {
+            driverCacheService.removeAvailableDriver(id);
+            log.info("Driver {} removed from available cache", id);
+        }
 
-        driverRepository.save(driver);
-        log.info("Driver {} new rating: {} (from {} ratings)", driverId, driver.getRating(), newCount);
+        log.info("Driver {} status updated to: {}", id, newStatus);
+        return convertToDto(updated);
     }
 }

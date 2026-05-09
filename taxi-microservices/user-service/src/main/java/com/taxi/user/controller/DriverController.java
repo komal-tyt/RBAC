@@ -84,4 +84,18 @@ public class DriverController {
         driverService.updateDriverRating(id, stars);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/cache/available")
+    public ResponseEntity<Set<String>> getAvailableDriversFromCache() {
+        log.info("GET /drivers/cache/available - Fetching available drivers from Redis");
+        Set<String> drivers = driverCacheService.getAllAvailableDrivers();
+        return ResponseEntity.ok(drivers);
+    }
+
+    @DeleteMapping("/cache")
+    public ResponseEntity<Void> clearCache() {
+        log.info("DELETE /drivers/cache - Clearing Redis cache");
+        driverCacheService.clearCache();
+        return ResponseEntity.ok().build();
+    }
 }
