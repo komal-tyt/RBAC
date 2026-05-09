@@ -65,7 +65,32 @@ public class DriverService {
 
     public Optional<Driver> findAvailableDriver() {
         log.debug("Searching for available driver (ONLINE status)");
-        return driverRepository.findFirstByStatus(DriverStatus.ONLINE);
+        return driverRepository.findFirstByStatusOrderByIdAsc(DriverStatus.ONLINE);
+    }
+
+    @Transactional
+    public Optional<DriverDto> assignAvailableDriver() {
+        log.info("Attempting atomic driver assignment");
+        Optional<Driver> candidate = driverRepository.findFirstByStatusOrderByIdAsc(DriverStatus.ONLINE);
+        if (candidate.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Driver driver = candidate.get();
+        int updated = driverRepository.updateStatusIfCurrent(
+                driver.getId(),
+                DriverStatus.ONLINE,
+                DriverStatus.BUSY
+        );
+
+        if (updated == 0) {
+            return Optional.empty();
+        }
+
+        Driver lockedDriver = driverRepository.findById(driver.getId())
+                .orElseThrow(() -> new RuntimeException("Assigned driver not found: " + driver.getId()));
+        log.info("Driver {} assigned atomically", lockedDriver.getId());
+        return Optional.of(convertToDto(lockedDriver));
     }
 
     public boolean existsDriver(Long id) {

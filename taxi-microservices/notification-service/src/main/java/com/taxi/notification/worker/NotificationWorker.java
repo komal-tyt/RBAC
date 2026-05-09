@@ -1,7 +1,6 @@
 package com.taxi.notification.worker;
 
 import com.taxi.notification.model.NotificationTask;
-import com.taxi.notification.repository.NotificationRepository;
 import com.taxi.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationWorker {
-    private final NotificationRepository notificationRepository;
     private final NotificationService notificationService;
 
     @Value("${notification.worker.pool-size:4}")
@@ -28,9 +26,6 @@ public class NotificationWorker {
 
     @Value("${notification.worker.poll-interval-ms:5000}")
     private long pollIntervalMs;
-
-    @Value("${notification.worker.max-retries:3}")
-    private int maxRetries;
 
     private ExecutorService executorService;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -52,8 +47,7 @@ public class NotificationWorker {
 
         while (running.get()) {
             try {
-                NotificationTask task = notificationRepository.findNextPendingTask(maxRetries)
-                        .orElse(null);
+                NotificationTask task = notificationService.claimNextPendingTask().orElse(null);
 
                 if (task != null) {
                     log.info("Worker {} picked up task {}", workerId, task.getId());

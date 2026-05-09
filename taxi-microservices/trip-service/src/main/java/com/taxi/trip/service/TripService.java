@@ -1,8 +1,10 @@
 package com.taxi.trip.service;
 
+import com.taxi.trip.client.NotificationServiceClient;
 import com.taxi.trip.client.UserServiceClient;
 import com.taxi.trip.dto.CreateTripRequest;
 import com.taxi.trip.dto.DriverDto;
+import com.taxi.trip.dto.NotificationRequestDto;
 import com.taxi.trip.dto.TripResponseDto;
 import com.taxi.trip.model.Trip;
 import com.taxi.trip.model.TripStatus;
@@ -12,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class TripService {
     private final TripRepository tripRepository;
     private final UserServiceClient userServiceClient;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Transactional
     public TripResponseDto createTrip(CreateTripRequest request) {
@@ -42,6 +44,7 @@ public class TripService {
         log.info("Trip created with id: {}", savedTrip.getId());
 
         assignDriverToTrip(savedTrip);
+        enqueueStatusNotifications(savedTrip);
 
         return convertToDto(savedTrip);
     }
@@ -50,7 +53,7 @@ public class TripService {
     private void assignDriverToTrip(Trip trip) {
         log.info("Looking for available driver for trip: {}", trip.getId());
 
-        Optional<DriverDto> availableDriver = userServiceClient.findAvailableDriver();
+        Optional<DriverDto> availableDriver = userServiceClient.assignAvailableDriver();
 
         if (availableDriver.isPresent()) {
             DriverDto driver = availableDriver.get();
@@ -59,11 +62,12 @@ public class TripService {
             int updated = tripRepository.assignDriver(trip.getId(), driver.getId());
 
             if (updated > 0) {
-                // Обновляем статус водителя на BUSY
-                userServiceClient.updateDriverStatus(driver.getId(), "BUSY");
                 log.info("Driver {} assigned to trip {}", driver.getId(), trip.getId());
+                trip.setDriverId(driver.getId());
+                trip.setStatus(TripStatus.ACCEPTED);
             } else {
                 log.warn("Trip {} was already assigned to another driver", trip.getId());
+                userServiceClient.updateDriverStatus(driver.getId(), "ONLINE");
             }
         } else {
             log.warn("No available driver found for trip {}", trip.getId());
@@ -136,6 +140,7 @@ public class TripService {
         }
 
         Trip updated = tripRepository.save(trip);
+        enqueueStatusNotifications(updated);
         return convertToDto(updated);
     }
 
@@ -155,5 +160,25 @@ public class TripService {
                 trip.getCreatedAt(),
                 trip.getUpdatedAt()
         );
+    }
+
+    private void enqueueStatusNotifications(Trip trip) {
+        NotificationRequestDto passengerNotification = new NotificationRequestDto(
+                trip.getId(),
+                "PASSENGER",
+                trip.getPassengerId(),
+                "Trip " + trip.getId() + " status changed to " + trip.getStatus()
+        );
+        notificationServiceClient.createNotification(passengerNotification);
+
+        if (trip.getDriverId() != null) {
+            NotificationRequestDto driverNotification = new NotificationRequestDto(
+                    trip.getId(),
+                    "DRIVER",
+                    trip.getDriverId(),
+                    "Trip " + trip.getId() + " status changed to " + trip.getStatus()
+            );
+            notificationServiceClient.createNotification(driverNotification);
+        }
     }
 }

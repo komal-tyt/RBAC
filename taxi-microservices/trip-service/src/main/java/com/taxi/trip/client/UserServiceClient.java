@@ -57,6 +57,25 @@ public class UserServiceClient {
         }
     }
 
+    public Optional<DriverDto> assignAvailableDriver() {
+        try {
+            log.debug("Atomically assigning available driver");
+            DriverDto driver = webClientBuilder.build()
+                    .post()
+                    .uri(userServiceUrl + "/drivers/assign")
+                    .retrieve()
+                    .bodyToMono(DriverDto.class)
+                    .block();
+            return Optional.ofNullable(driver);
+        } catch (WebClientResponseException.NotFound e) {
+            log.warn("No driver available for atomic assignment");
+            return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error assigning available driver: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     public boolean updateDriverStatus(Long driverId, String status) {
         try {
             log.debug("Updating driver {} status to {}", driverId, status);

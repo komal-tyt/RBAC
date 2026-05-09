@@ -2,7 +2,10 @@ package com.taxi.user.repository;
 
 import com.taxi.user.model.Driver;
 import com.taxi.user.model.DriverStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +21,12 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 
     List<Driver> findByStatus(DriverStatus status);
 
-    @Query("SELECT d FROM Driver d WHERE d.status = :status ORDER BY d.id ASC")
-    Optional<Driver> findFirstByStatus(@Param("status") DriverStatus status);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<Driver> findFirstByStatusOrderByIdAsc(DriverStatus status);
+
+    @Modifying
+    @Query("UPDATE Driver d SET d.status = :newStatus WHERE d.id = :driverId AND d.status = :expectedStatus")
+    int updateStatusIfCurrent(@Param("driverId") Long driverId,
+                              @Param("expectedStatus") DriverStatus expectedStatus,
+                              @Param("newStatus") DriverStatus newStatus);
 }

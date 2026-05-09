@@ -56,6 +56,14 @@ public class DriverController {
         }
     }
 
+    @PostMapping("/assign")
+    public ResponseEntity<DriverDto> assignAvailableDriver() {
+        log.info("POST /drivers/assign - Atomically assigning available driver");
+        return driverService.assignAvailableDriver()
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
     @GetMapping("/{id}/exists")
     public ResponseEntity<Boolean> existsDriver(@PathVariable Long id) {
         log.debug("GET /drivers/{}/exists - Checking if driver exists", id);

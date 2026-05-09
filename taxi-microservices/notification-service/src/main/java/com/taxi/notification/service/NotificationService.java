@@ -8,11 +8,12 @@ import com.taxi.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import java.util.HashMap;
@@ -55,6 +56,28 @@ public class NotificationService {
     }
 
     @Transactional
+    public Optional<NotificationTask> claimNextPendingTask() {
+        List<NotificationTask> pendingTasks = notificationRepository.findByStatusAndAttemptsLessThanOrderByCreatedAtAsc(
+                NotificationStatus.PENDING,
+                maxRetries,
+                PageRequest.of(0, 1)
+        );
+        if (pendingTasks.isEmpty()) {
+            return Optional.empty();
+        }
+
+        NotificationTask task = pendingTasks.get(0);
+        int claimed = notificationRepository.markAsProcessing(task.getId());
+        if (claimed == 0) {
+            return Optional.empty();
+        }
+
+        NotificationTask processingTask = notificationRepository.findById(task.getId())
+                .orElseThrow(() -> new RuntimeException("Claimed notification task not found: " + task.getId()));
+        return Optional.of(processingTask);
+    }
+
+    @Transactional
     public boolean sendNotification(NotificationTask task) {
         log.info("Sending notification to {} {}: {}",
                 task.getRecipientType(), task.getRecipientId(), task.getMessage());
@@ -79,14 +102,14 @@ public class NotificationService {
 
             int newAttempts = task.getAttempts() + 1;
             if (newAttempts >= maxRetries) {
-                notificationRepository.updateStatus(
+                notificationRepository.updateStatusWithAttempt(
                         task.getId(),
                         NotificationStatus.FAILED,
                         e.getMessage() + " (max retries exceeded)"
                 );
                 log.warn("Notification {} failed after {} attempts", task.getId(), maxRetries);
             } else {
-                notificationRepository.updateStatus(
+                notificationRepository.updateStatusWithAttempt(
                         task.getId(),
                         NotificationStatus.PENDING,
                         e.getMessage() + " (retry " + newAttempts + "/" + maxRetries + ")"
@@ -94,6 +117,15 @@ public class NotificationService {
             }
             return false;
         }
+    }
+
+    public Map<String, Long> getQueueStats() {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("PENDING", notificationRepository.countByStatus(NotificationStatus.PENDING));
+        stats.put("PROCESSING", notificationRepository.countByStatus(NotificationStatus.PROCESSING));
+        stats.put("SENT", notificationRepository.countByStatus(NotificationStatus.SENT));
+        stats.put("FAILED", notificationRepository.countByStatus(NotificationStatus.FAILED));
+        return stats;
     }
 
     private NotificationResponseDto convertToDto(NotificationTask task) {
