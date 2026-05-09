@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.taxi.trip.dto.RateTripRequest;
 
 @RestController
 @RequestMapping("/trips")
@@ -49,6 +50,15 @@ public class TripController {
             @RequestHeader(value = "X-Driver-Id", required = false) Long driverId) {
         log.info("PATCH /trips/{}/status - Updating status to: {}", id, request.getStatus());
         TripResponseDto trip = tripService.updateTripStatus(id, request.getStatus(), driverId);
+        return ResponseEntity.ok(trip);
+    }
+
+    @PostMapping("/{id}/rate")
+    public ResponseEntity<TripResponseDto> rateTrip(
+            @PathVariable Long id,
+            @Valid @RequestBody RateTripRequest request) {
+        log.info("POST /trips/{}/rate - Rating trip with {} stars", id, request.getRating());
+        TripResponseDto trip = tripService.rateTrip(id, request.getRating(), request.getComment());
         return ResponseEntity.ok(trip);
     }
 }

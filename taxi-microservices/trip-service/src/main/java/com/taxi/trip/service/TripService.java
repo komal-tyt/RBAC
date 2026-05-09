@@ -157,6 +157,7 @@ public class TripService {
                 trip.getDestination(),
                 trip.getStatus(),
                 trip.getPrice(),
+                trip.getRating(),
                 trip.getCreatedAt(),
                 trip.getUpdatedAt()
         );

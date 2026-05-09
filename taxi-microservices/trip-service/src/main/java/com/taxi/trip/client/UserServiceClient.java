@@ -97,4 +97,24 @@ public class UserServiceClient {
             return false;
         }
     }
+
+    public void updateDriverRating(Long driverId, Integer stars) {
+        try {
+            log.debug("Updating driver {} rating with {} stars", driverId, stars);
+            String requestBody = String.format("{\"stars\":%d}", stars);
+
+            webClientBuilder.build()
+                    .post()
+                    .uri(userServiceUrl + "/drivers/{id}/rate", driverId)
+                    .header("Content-Type", "application/json")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+
+            log.info("Driver {} rating updated with {} stars", driverId, stars);
+        } catch (Exception e) {
+            log.error("Error updating driver {} rating: {}", driverId, e.getMessage());
+        }
+    }
 }

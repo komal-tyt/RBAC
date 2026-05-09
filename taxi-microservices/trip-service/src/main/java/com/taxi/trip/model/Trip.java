@@ -46,4 +46,7 @@ public class Trip {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "rating")
+    private Integer rating;
 }

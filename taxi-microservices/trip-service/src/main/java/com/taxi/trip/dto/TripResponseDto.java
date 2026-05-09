@@ -17,6 +17,7 @@ public class TripResponseDto {
     private String destination;
     private TripStatus status;
     private Double price;
+    private Integer rating;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
