@@ -5,6 +5,7 @@ import com.taxi.trip.client.UserServiceClient;
 import com.taxi.trip.dto.CreateTripRequest;
 import com.taxi.trip.dto.DriverDto;
 import com.taxi.trip.dto.NotificationRequestDto;
+import com.taxi.trip.dto.TariffDto;
 import com.taxi.trip.dto.TripResponseDto;
 import com.taxi.trip.model.Trip;
 import com.taxi.trip.model.TripStatus;
@@ -127,7 +128,6 @@ public class TripService {
                     userServiceClient.updateDriverStatus(trip.getDriverId(), "ONLINE");
                     log.info("Driver {} released back to ONLINE", trip.getDriverId());
                 }
-                trip.setPrice(calculatePrice(trip.getOrigin(), trip.getDestination()));
                 log.info("Trip {} completed with price: {}", id, trip.getPrice());
                 break;
 
@@ -139,17 +139,6 @@ public class TripService {
                 log.info("Trip {} cancelled", id);
                 break;
 
-            case COMPLETED:
-                if (oldStatus != TripStatus.IN_PROGRESS) {
-                    throw new RuntimeException("Cannot complete trip that is not in progress");
-                }
-                if (trip.getDriverId() != null) {
-                    userServiceClient.updateDriverStatus(trip.getDriverId(), "ONLINE");
-                    log.info("Driver {} released back to ONLINE", trip.getDriverId());
-                }
-                log.info("Trip {} completed with price: {}", id, trip.getPrice());
-                break;
-
             default:
                 break;
         }
@@ -157,10 +146,6 @@ public class TripService {
         Trip updated = tripRepository.save(trip);
         enqueueStatusNotifications(updated);
         return convertToDto(updated);
-    }
-
-    private Double calculatePrice(String origin, String destination) {
-        return 50.0 + Math.random() * 100;
     }
 
     private TripResponseDto convertToDto(Trip trip) {
@@ -255,11 +240,18 @@ public class TripService {
         if (tariff == null) {
             tariff = userServiceClient.getDefaultTariff();
         }
-        log.info("Using tariff: {}, basePrice={}, pricePerKm={}",
-                tariff.getName(), tariff.getBasePrice(), tariff.getPricePerKm());
+        if (tariff == null || tariff.getPricePerKm() == null) {
+            throw new RuntimeException("Tariff not found or invalid: " + request.getTariffName());
+        }
+
+        log.info("Using tariff: {}, pricePerKm={}", tariff.getName(), tariff.getPricePerKm());
 
         double price = tariff.getBasePrice() + (tariff.getPricePerKm() * distanceKm);
 
         return Math.round(price * 100.0) / 100.0;
+    }
+
+    public Double calculatePriceForEstimate(CreateTripRequest request) {
+        return calculatePrice(request);
     }
 }

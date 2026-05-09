@@ -1,6 +1,7 @@
 package com.taxi.trip.client;
 
 import com.taxi.trip.dto.DriverDto;
+import com.taxi.trip.dto.TariffDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

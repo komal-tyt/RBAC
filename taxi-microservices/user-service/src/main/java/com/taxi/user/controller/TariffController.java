@@ -32,7 +32,8 @@ public class TariffController {
         log.info("GET /tariffs/active - Fetching active tariff");
         return tariffRepository.findFirstByActiveTrueOrderByIdAsc()
                 .map(this::convertToDto)
-                .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{name}")
@@ -40,7 +41,8 @@ public class TariffController {
         log.info("GET /tariffs/{} - Fetching tariff by name", name);
         return tariffRepository.findByName(name)
                 .map(this::convertToDto)
-                .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
