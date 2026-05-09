@@ -4,6 +4,7 @@ import com.taxi.user.dto.DriverDto;
 import com.taxi.user.dto.DriverStatusUpdateDto;
 import com.taxi.user.model.Driver;
 import com.taxi.user.model.DriverStatus;
+import com.taxi.user.service.DriverCacheService;
 import com.taxi.user.service.DriverService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/drivers")
@@ -21,6 +23,7 @@ import java.util.Map;
 @Slf4j
 public class DriverController {
     private final DriverService driverService;
+    private final DriverCacheService driverCacheService;
 
     @PostMapping
     public ResponseEntity<DriverDto> registerDriver(@Valid @RequestBody DriverDto driverDto) {

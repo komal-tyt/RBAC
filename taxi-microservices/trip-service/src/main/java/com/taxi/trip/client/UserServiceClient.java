@@ -60,7 +60,7 @@ public class UserServiceClient {
 
     public Optional<DriverDto> assignAvailableDriver() {
         try {
-            log.debug("Atomically assigning available driver");
+            log.debug("Atomically assigning available driver via User Service");
             DriverDto driver = webClientBuilder.build()
                     .post()
                     .uri(userServiceUrl + "/drivers/assign")
@@ -68,6 +68,7 @@ public class UserServiceClient {
                     .bodyToMono(DriverDto.class)
                     .block();
             return Optional.ofNullable(driver);
+
         } catch (WebClientResponseException.NotFound e) {
             log.warn("No driver available for atomic assignment");
             return Optional.empty();
@@ -156,4 +157,5 @@ public class UserServiceClient {
             return fallback;
         }
     }
+
 }

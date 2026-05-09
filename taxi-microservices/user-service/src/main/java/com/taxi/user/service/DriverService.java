@@ -57,9 +57,16 @@ public class DriverService {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Driver not found with id: " + id));
 
+        DriverStatus oldStatus = driver.getStatus();
         driver.setStatus(newStatus);
         Driver updated = driverRepository.save(driver);
         log.info("Driver {} status updated to: {}", id, newStatus);
+
+        if (newStatus == DriverStatus.ONLINE && oldStatus != DriverStatus.ONLINE) {
+            driverCacheService.addAvailableDriver(id);
+        } else if (oldStatus == DriverStatus.ONLINE && newStatus != DriverStatus.ONLINE) {
+            driverCacheService.removeAvailableDriver(id);
+        }
 
         return convertToDto(updated);
     }
@@ -72,26 +79,45 @@ public class DriverService {
     @Transactional
     public Optional<DriverDto> assignAvailableDriver() {
         log.info("Attempting atomic driver assignment");
-        Optional<Driver> candidate = driverRepository.findFirstByStatusOrderByIdAsc(DriverStatus.ONLINE);
-        if (candidate.isEmpty()) {
-            return Optional.empty();
+        // Prefer Redis cache for speed (set of ONLINE drivers)
+        for (int attempt = 0; attempt < 10; attempt++) {
+            String cachedId = driverCacheService.popAvailableDriver();
+            if (cachedId != null) {
+                Long driverId = Long.parseLong(cachedId);
+                int updated = driverRepository.updateStatusIfCurrent(driverId, DriverStatus.ONLINE, DriverStatus.BUSY);
+                if (updated > 0) {
+                    Driver lockedDriver = driverRepository.findById(driverId)
+                            .orElseThrow(() -> new RuntimeException("Assigned driver not found: " + driverId));
+                    log.info("Driver {} assigned atomically (via Redis)", lockedDriver.getId());
+                    return Optional.of(convertToDto(lockedDriver));
+                }
+                // stale cache entry; retry
+                continue;
+            }
+
+            // Fallback to DB if Redis empty/unavailable
+            Optional<Driver> candidate = driverRepository.findFirstByStatusOrderByIdAsc(DriverStatus.ONLINE);
+            if (candidate.isEmpty()) {
+                return Optional.empty();
+            }
+
+            Driver driver = candidate.get();
+            int updated = driverRepository.updateStatusIfCurrent(
+                    driver.getId(),
+                    DriverStatus.ONLINE,
+                    DriverStatus.BUSY
+            );
+            if (updated == 0) {
+                continue;
+            }
+
+            Driver lockedDriver = driverRepository.findById(driver.getId())
+                    .orElseThrow(() -> new RuntimeException("Assigned driver not found: " + driver.getId()));
+            log.info("Driver {} assigned atomically (via DB fallback)", lockedDriver.getId());
+            return Optional.of(convertToDto(lockedDriver));
         }
 
-        Driver driver = candidate.get();
-        int updated = driverRepository.updateStatusIfCurrent(
-                driver.getId(),
-                DriverStatus.ONLINE,
-                DriverStatus.BUSY
-        );
-
-        if (updated == 0) {
-            return Optional.empty();
-        }
-
-        Driver lockedDriver = driverRepository.findById(driver.getId())
-                .orElseThrow(() -> new RuntimeException("Assigned driver not found: " + driver.getId()));
-        log.info("Driver {} assigned atomically", lockedDriver.getId());
-        return Optional.of(convertToDto(lockedDriver));
+        return Optional.empty();
     }
 
     public boolean existsDriver(Long id) {
@@ -112,25 +138,15 @@ public class DriverService {
     }
 
     @Transactional
-    public DriverDto updateDriverStatus(Long id, DriverStatus newStatus) {
-        log.info("Updating driver {} status to: {}", id, newStatus);
+    public void updateDriverRating(Long driverId, Integer stars) {
+        Driver driver = driverRepository.findById(driverId)
+                .orElseThrow(() -> new RuntimeException("Driver not found with id: " + driverId));
 
-        Driver driver = driverRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Driver not found with id: " + id));
-
-        DriverStatus oldStatus = driver.getStatus();
-        driver.setStatus(newStatus);
-        Driver updated = driverRepository.save(driver);
-
-        if (newStatus == DriverStatus.ONLINE && oldStatus != DriverStatus.ONLINE) {
-            driverCacheService.addAvailableDriver(id);
-            log.info("Driver {} added to available cache", id);
-        } else if (oldStatus == DriverStatus.ONLINE && newStatus != DriverStatus.ONLINE) {
-            driverCacheService.removeAvailableDriver(id);
-            log.info("Driver {} removed from available cache", id);
-        }
-
-        log.info("Driver {} status updated to: {}", id, newStatus);
-        return convertToDto(updated);
+        int newSum = (driver.getRatingSum() == null ? 0 : driver.getRatingSum()) + stars;
+        int newTotal = (driver.getTotalRatings() == null ? 0 : driver.getTotalRatings()) + 1;
+        driver.setRatingSum(newSum);
+        driver.setTotalRatings(newTotal);
+        driver.setRating(((double) newSum) / newTotal);
+        driverRepository.save(driver);
     }
 }

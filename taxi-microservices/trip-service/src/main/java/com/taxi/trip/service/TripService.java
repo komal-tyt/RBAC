@@ -246,7 +246,8 @@ public class TripService {
 
         log.info("Using tariff: {}, pricePerKm={}", tariff.getName(), tariff.getPricePerKm());
 
-        double price = tariff.getBasePrice() + (tariff.getPricePerKm() * distanceKm);
+        // Requirement: price = distance * tariff
+        double price = tariff.getPricePerKm() * distanceKm;
 
         return Math.round(price * 100.0) / 100.0;
     }
