@@ -25,6 +25,10 @@ public class BackgroundExecutor {
         return scheduler.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 
+    public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+        return scheduler.schedule(command, delay, unit);
+    }
+
     public void shutdown() {
         executor.shutdown();
         scheduler.shutdown();
@@ -40,5 +44,9 @@ public class BackgroundExecutor {
             scheduler.shutdownNow();
             Thread.currentThread().interrupt();
         }
+    }
+
+    public boolean isShutdown() {
+        return executor.isShutdown();
     }
 }

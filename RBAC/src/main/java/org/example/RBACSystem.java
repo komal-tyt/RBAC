@@ -2,6 +2,7 @@ package org.example;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class RBACSystem {
 
@@ -20,6 +21,76 @@ public class RBACSystem {
         this.auditLog = auditLog;
         this.backgroundExecutor = new BackgroundExecutor();
         this.currentUser = null;
+
+        startScheduledTasks();
+    }
+
+    private void startScheduledTasks() {
+        backgroundExecutor.scheduleAtFixedRate(() -> {
+            try {
+                expireTemporaryAssignments();
+            } catch (Exception e) {
+                System.err.println("Error in expire task: " + e.getMessage());
+            }
+        }, 10, 30, TimeUnit.SECONDS);
+
+        backgroundExecutor.scheduleAtFixedRate(() -> {
+            try {
+                logStatistics();
+            } catch (Exception e) {
+                System.err.println("Error in stats task: " + e.getMessage());
+            }
+        }, 15, 60, TimeUnit.SECONDS);
+    }
+
+    private void expireTemporaryAssignments() {
+        String currentDate = DateUtils.getCurrentDate();
+        int expiredCount = 0;
+
+
+        List<RoleAssignment> allAssignments = assignmentManager.findAll();
+        for (RoleAssignment ra : allAssignments) {
+            if (ra instanceof TemporaryAssignment) {
+                TemporaryAssignment temp = (TemporaryAssignment) ra;
+                if (temp.isActive() && DateUtils.isBefore(temp.getExpiresAt(), currentDate)) {
+                    String yesterday = DateUtils.addDays(currentDate, -1);
+                    temp.extend(yesterday);
+                    expiredCount++;
+
+                    auditLog.log("EXPIRED_ASSIGNMENT", "system",
+                            temp.user().username() + " -> " + temp.role().name(),
+                            "Assignment expired on " + temp.getExpiresAt());
+                }
+            }
+        }
+
+        if (expiredCount > 0) {
+            System.out.println("[SCHEDULED] Expired " + expiredCount + " temporary assignments");
+        }
+    }
+
+    private void logStatistics() {
+        int userCount = userManager.count();
+        int roleCount = roleManager.count();
+        int assignmentCount = assignmentManager.count();
+        long activeAssignments = assignmentManager.getActiveAssignments().size();
+        long expiredAssignments = assignmentManager.getExpiredAssignments().size();
+
+        List<RoleAssignment> allAssignments = assignmentManager.findAll();
+        long permanentCount = allAssignments.stream()
+                .filter(ra -> ra instanceof PermanentAssignment)
+                .count();
+        long temporaryCount = allAssignments.stream()
+                .filter(ra -> ra instanceof TemporaryAssignment)
+                .count();
+
+        String stats = String.format(
+                "[SCHEDULED STATS] Users: %d, Roles: %d, Assignments: %d (Permanent: %d, Temporary: %d, Active: %d, Expired: %d)",
+                userCount, roleCount, assignmentCount, permanentCount, temporaryCount, activeAssignments, expiredAssignments
+        );
+
+        System.out.println(stats);
+        auditLog.log("SCHEDULED_STATS", "system", "system", stats);
     }
 
     public BackgroundExecutor getBackgroundExecutor() {

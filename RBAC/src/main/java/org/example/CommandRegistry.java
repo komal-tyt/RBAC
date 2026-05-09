@@ -1834,5 +1834,24 @@ public class CommandRegistry {
             sys.getAuditLog().log("CHECK_ASYNC_STATUS", sys.getCurrentUser(), "system", "Status check");
         });
 
+        parser.registerCommand("scheduled-status", "Show scheduled tasks status", (s, sys) -> {
+            ConsoleUtils.printHeader("SCHEDULED TASKS STATUS");
+
+            ConsoleUtils.printInfo("Periodic tasks are running:");
+            ConsoleUtils.printInfo("  - Expired assignments check: every 30 seconds");
+            ConsoleUtils.printInfo("  - Statistics logging: every 60 seconds");
+
+            int userCount = sys.getUserManager().count();
+            int roleCount = sys.getRoleManager().count();
+            int assignmentCount = sys.getAssignmentManager().count();
+
+            System.out.println("\nCurrent system state:");
+            System.out.println("  Users: " + userCount);
+            System.out.println("  Roles: " + roleCount);
+            System.out.println("  Assignments: " + assignmentCount);
+
+            sys.getAuditLog().log("SCHEDULED_STATUS_CHECK", sys.getCurrentUser(), "system", "Status requested");
+        });
+
     }
 }
