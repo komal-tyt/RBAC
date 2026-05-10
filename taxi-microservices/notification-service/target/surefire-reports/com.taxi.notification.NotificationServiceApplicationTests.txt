@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.taxi.notification.NotificationServiceApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 24.458 s - in com.taxi.notification.NotificationServiceApplicationTests

@@ -1,6 +1,7 @@
 package com.taxi.trip.controller;
 
 import com.taxi.trip.dto.CreateTripRequest;
+import com.taxi.trip.dto.RateTripRequest;
 import com.taxi.trip.dto.TripDayStatisticsDto;
 import com.taxi.trip.dto.TripResponseDto;
 import com.taxi.trip.dto.UpdateTripStatusRequest;
@@ -31,11 +32,11 @@ public class TripController {
         return ResponseEntity.status(HttpStatus.CREATED).body(trip);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<TripResponseDto> getTrip(@PathVariable Long id) {
-        log.info("GET /trips/{} - Fetching trip", id);
-        TripResponseDto trip = tripService.getTrip(id);
-        return ResponseEntity.ok(trip);
+    @GetMapping("/statistics/daily")
+    public ResponseEntity<TripDayStatisticsDto> getDailyStatistics(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        log.info("GET /trips/statistics/daily date={}", date);
+        return ResponseEntity.ok(tripService.getDailyStatistics(date));
     }
 
     @GetMapping
@@ -45,11 +46,11 @@ public class TripController {
         return ResponseEntity.ok(trips);
     }
 
-    @GetMapping("/statistics/daily")
-    public ResponseEntity<TripDayStatisticsDto> getDailyStatistics(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        log.info("GET /trips/statistics/daily date={}", date);
-        return ResponseEntity.ok(tripService.getDailyStatistics(date));
+    @GetMapping("/{id}")
+    public ResponseEntity<TripResponseDto> getTrip(@PathVariable Long id) {
+        log.info("GET /trips/{} - Fetching trip", id);
+        TripResponseDto trip = tripService.getTrip(id);
+        return ResponseEntity.ok(trip);
     }
 
     @PatchMapping("/{id}/status")
@@ -59,6 +60,15 @@ public class TripController {
             @RequestHeader(value = "X-Driver-Id", required = false) Long driverId) {
         log.info("PATCH /trips/{}/status - Updating status to: {}", id, request.getStatus());
         TripResponseDto trip = tripService.updateTripStatus(id, request.getStatus(), driverId);
+        return ResponseEntity.ok(trip);
+    }
+
+    @PostMapping("/{id}/rate")
+    public ResponseEntity<TripResponseDto> rateTrip(
+            @PathVariable Long id,
+            @Valid @RequestBody RateTripRequest request) {
+        log.info("POST /trips/{}/rate rating={}", id, request.getRating());
+        TripResponseDto trip = tripService.rateTrip(id, request.getRating(), request.getComment());
         return ResponseEntity.ok(trip);
     }
 }

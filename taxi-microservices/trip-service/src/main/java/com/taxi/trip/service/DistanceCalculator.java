@@ -24,7 +24,7 @@ public class DistanceCalculator {
         return Math.round(distance * 100.0) / 100.0;
     }
 
-    double estimateByAddress(String origin, String destination) {
+    public double estimateByAddress(String origin, String destination) {
         int originLen = origin == null ? 0 : origin.length();
         int destLen = destination == null ? 0 : destination.length();
         double distance = Math.max(1.0, (originLen + destLen) * 0.3);

@@ -28,6 +28,5 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     @Query("UPDATE Trip t SET t.driverId = :driverId, t.status = 'ACCEPTED' WHERE t.id = :id AND t.status = 'PENDING'")
     int assignDriver(@Param("id") Long id, @Param("driverId") Long driverId);
 
-    @Query("SELECT COUNT(t), AVG(t.price) FROM Trip t WHERE t.createdAt >= :start AND t.createdAt < :end")
-    Object[] aggregateTripsCreatedBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    List<Trip> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
 }

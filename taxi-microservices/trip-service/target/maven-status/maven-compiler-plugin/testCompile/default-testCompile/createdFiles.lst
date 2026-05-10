@@ -1,0 +1,3 @@
+com\taxi\trip\TripExtrasWebTest.class
+com\taxi\trip\TripStatisticsTests.class
+com\taxi\trip\TripPriceCalculationTests.class

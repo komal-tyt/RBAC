@@ -104,13 +104,16 @@ public class TripService {
         LocalDateTime start = day.atStartOfDay(zone).toLocalDateTime();
         LocalDateTime end = day.plusDays(1).atStartOfDay(zone).toLocalDateTime();
 
-        Object[] row = tripRepository.aggregateTripsCreatedBetween(start, end);
-        long tripCount = ((Number) row[0]).longValue();
-        Double averagePrice = null;
-        if (row[1] != null) {
-            double raw = ((Number) row[1]).doubleValue();
-            averagePrice = Math.round(raw * 100.0) / 100.0;
-        }
+        List<Trip> trips = tripRepository.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(start, end);
+        long tripCount = trips.size();
+        java.util.OptionalDouble avg = trips.stream()
+                .map(Trip::getPrice)
+                .filter(java.util.Objects::nonNull)
+                .mapToDouble(Double::doubleValue)
+                .average();
+        Double averagePrice = avg.isEmpty()
+                ? null
+                : Math.round(avg.getAsDouble() * 100.0) / 100.0;
 
         return new TripDayStatisticsDto(day, tripCount, averagePrice);
     }

@@ -1,0 +1,5 @@
+# Created at 2026-05-10T01:47:42.753
+Boot Manifest-JAR contains absolute paths in classpath 'D:\3semestr\RBAC\RBAC\taxi-microservices\trip-service\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
